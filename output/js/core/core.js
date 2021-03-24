@@ -4,6 +4,7 @@ import { InputManager } from "./input.js";
 export class GameEvent {
     constructor(step, core, canvas, input, assets) {
         this.isShaking = () => this.canvas.isShaking();
+        this.getTilemap = (name) => this.assets.getTilemap(name);
         this.core = core;
         this.step = step;
         this.canvas = canvas;

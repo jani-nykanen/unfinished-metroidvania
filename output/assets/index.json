@@ -2,11 +2,16 @@
     "bitmapPath" : "assets/bitmaps/",
     "bitmaps" : [
 
+        {"name": "tileset",  "path": "tileset.png"},
+        {"name": "sky",  "path": "sky.png"},
+        {"name": "background",  "path": "background.png"},
         {"name": "font",  "path": "font.png"}
     ],
 
     "tilemapPath" : "assets/tilemaps/",
     "tilemaps" : [
 
+        {"name": "collisions", "path": "collisions.tmx"},
+        {"name": "fields", "path": "fields.tmx"}
     ]
 }

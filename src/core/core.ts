@@ -1,6 +1,7 @@
 import { AssetManager } from "./assets.js";
 import { Canvas } from "./canvas.js";
 import { InputManager } from "./input.js";
+import { Tilemap } from "./tilemap.js";
 import { State } from "./types.js";
 import { Vector2 } from "./vector.js";
 
@@ -51,6 +52,8 @@ export class GameEvent {
 
 
     public isShaking = () : boolean => this.canvas.isShaking();
+
+    public getTilemap = (name : string) : Tilemap => this.assets.getTilemap(name);
 }
 
 
