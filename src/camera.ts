@@ -29,8 +29,7 @@ export class Camera {
 
     public followObject(o : GameObject, ev : GameEvent) {
 
-        const EPS = 0.1;
-        const FORWARD = 32;
+        const FORWARD = 16;
         const MOVE_SPEED_X = 0.5;
         const VERTICAL_DEADZONE = 16;
 
@@ -41,22 +40,9 @@ export class Camera {
             this.pos.y = o.getPos().y + VERTICAL_DEADZONE * Math.sign(d);
         }
 
-        let target = o.getTarget().x;
-        let dir = 0;
-        if (Math.abs(target) > EPS) {
-
-            dir = Math.sign(target);
-        }
-        else if (Math.abs(o.getSpeed().x) < EPS) {
-
-            dir = 0;
-        }
-
-        this.centerOffTarget.x = dir * FORWARD;
-
+        this.centerOffTarget.x = o.getTarget().x * FORWARD;
         this.centerOff.x = updateSpeedAxis(this.centerOff.x, 
             this.centerOffTarget.x, MOVE_SPEED_X * ev.step);
-        
     }
 
 
@@ -110,8 +96,8 @@ export class Camera {
     public use(c : Canvas) {
 
         c.moveTo(
-            Math.round(-this.pos.x - this.centerOff.x + this.width/2), 
-            Math.round(-this.pos.y - this.centerOff.y + this.height/2)
+            Math.floor(-this.pos.x - this.centerOff.x + this.width/2), 
+            Math.floor(-this.pos.y - this.centerOff.y + this.height/2)
         );
     }
 

@@ -24,8 +24,8 @@ export class Player extends CollisionObject {
         super(x, y);
 
         this.friction = new Vector2(0.1, 0.1);
-        this.hitbox = new Vector2(16, 16);
-        this.collisionBox = new Vector2(12, 12);
+        this.hitbox = new Vector2(12, 16);
+        this.collisionBox = new Vector2(8, 12);
         this.center = new Vector2();
         this.renderOffset = new Vector2(0, -2);
 
@@ -77,8 +77,11 @@ export class Player extends CollisionObject {
 
         const EPS = 0.01;
         const JUMP_EPS = 0.5;
+        const BASE_SPEED = 12;
+        const SPEED_MOD = 6;
 
         let frame : number;
+        let speed : number;
 
         if (this.canJump) {
 
@@ -88,7 +91,8 @@ export class Player extends CollisionObject {
             }
             else {
 
-                this.spr.animate(0, 1, 4, 6, ev.step);
+                speed = BASE_SPEED - Math.abs(this.speed.x) * SPEED_MOD;
+                this.spr.animate(0, 1, 4, speed, ev.step);
             }
         }
         else {
@@ -145,8 +149,8 @@ export class Player extends CollisionObject {
 
         let bmp = c.getBitmap("player");
 
-        let px = Math.round(this.pos.x) + this.renderOffset.x;
-        let py = Math.round(this.pos.y) + 1 + this.renderOffset.y;
+        let px = Math.floor(this.pos.x) + this.renderOffset.x;
+        let py = Math.floor(this.pos.y) + 1 + this.renderOffset.y;
 
         c.drawSprite(this.spr, bmp, 
             px - this.spr.width/2, 

@@ -160,7 +160,8 @@ export class CollisionObject extends GameObject {
             !this.exist || this.dying ||
             this.speed.y * dir < EPS)
             return false;
-        if (this.pos.x + this.collisionBox.x / 2 < x || this.pos.x - this.collisionBox.x / 2 >= x + w)
+        if (this.pos.x + this.collisionBox.x / 2 < x ||
+            this.pos.x - this.collisionBox.x / 2 >= x + w)
             return false;
         let py = this.pos.y + this.center.y + dir * this.collisionBox.y / 2;
         if ((dir > 0 && py > y - NEAR_MARGIN * ev.step &&

@@ -86,24 +86,30 @@ export class Stage {
 
     public drawBackground(c : Canvas, cam : Camera) {
 
-        const CLOUD_Y = 64;
+        const CLOUD_Y = 48;
+        const DISTANCE_MOD = 4;
+
+        let camPos = cam.getTopLeftCorner();
+        let shifty = Math.floor((camPos.y - (this.height*16 - c.height)) / DISTANCE_MOD);
 
         c.drawBitmap(c.getBitmap("sky"), 0, 0);
 
-        let p = -Math.floor(this.cloudPos);
+        let p = -Math.floor((this.cloudPos + camPos.x/DISTANCE_MOD) % 96) ;
         let bmp = c.getBitmap("background");
 
         for (let i = 0; i < 3; ++ i) {
 
             if (i*96 + p > 160 || i*96 + p < -96) continue;
 
+            // Cloud
             c.drawBitmapRegion(bmp, 0, 0, 96, 48,
-                i*96 + p, CLOUD_Y);
+                i*96 + p, CLOUD_Y - shifty);
 
+            // Water
             if (i < 2) {
 
-                c.drawBitmapRegion(bmp, 0, 48, 80, 32, 
-                    i*80, CLOUD_Y + 48);
+                c.drawBitmapRegion(bmp, 0, 48, 80, 48, 
+                    i*80, CLOUD_Y + 48 - shifty);
             }
         }
     }
@@ -154,10 +160,6 @@ export class Stage {
         colId : number, ev : GameEvent) {
 
         let c = COLLISION_TABLE[colId];
-
-        let left = this.getCollisionTile(this.getTile(layer, x-1, y)-1);
-        let right = this.getCollisionTile(this.getTile(layer, x+1, y)-1);
-
 
         // Constant surfaces
         if ((c & COL_DOWN) == COL_DOWN) {
