@@ -39,7 +39,28 @@ export class Player extends CollisionObject {
         }
     }
     animate(ev) {
-        // ...
+        const EPS = 0.01;
+        const JUMP_EPS = 0.5;
+        let frame;
+        if (this.canJump) {
+            if (Math.abs(this.speed.x) < EPS) {
+                this.spr.setFrame(0, 0);
+            }
+            else {
+                this.spr.animate(0, 1, 4, 6, ev.step);
+            }
+        }
+        else {
+            frame = 1;
+            if (this.speed.y < -JUMP_EPS)
+                frame = 0;
+            else if (this.speed.y > JUMP_EPS)
+                frame = 2;
+            this.spr.setFrame(frame, 1);
+        }
+        if (Math.abs(this.target.x) > EPS) {
+            this.flip = this.target.x > 0 ? Flip.None : Flip.Horizontal;
+        }
     }
     updateTimers(ev) {
         const JUMP_SPEED = -2.0;
@@ -61,12 +82,10 @@ export class Player extends CollisionObject {
         this.canJump = false;
     }
     draw(c) {
+        let bmp = c.getBitmap("player");
         let px = Math.round(this.pos.x) + this.renderOffset.x;
         let py = Math.round(this.pos.y) + 1 + this.renderOffset.y;
-        c.setFillColor(0);
-        c.fillRect(px - 8, py - 8, 16, 16);
-        c.setFillColor(255, 0, 0);
-        c.fillRect(px - 7, py - 7, 14, 14);
+        c.drawSprite(this.spr, bmp, px - this.spr.width / 2, py - this.spr.height / 2, this.flip);
     }
     setPosition(x, y) {
         this.pos = new Vector2(x, y);
