@@ -26,21 +26,58 @@ export class Player extends CollisionObject {
         this.hurtTimer = 0;
         this.flip = Flip.None;
         this.dir = 1;
+        this.downAttacking = false;
+        this.downAttackWait = 0;
     }
     die(ev) {
         return true;
     }
-    control(ev) {
+    jump(ev) {
         const EPS = 0.1;
-        const BASE_GRAVITY = 4.0;
-        const BASE_SPEED = 1.0;
-        const CLIMB_SPEED = 0.5;
         const JUMP_TIME = 15;
-        const SWORD_RUSH = 1.0;
         let jumpButtonState = ev.getAction("fire1");
-        if (this.attacking)
-            return;
-        // Start climbing
+        if (Math.abs(this.target.x) > EPS) {
+            this.flip = this.target.x > 0 ? Flip.None : Flip.Horizontal;
+            this.dir = Math.sign(this.target.x);
+        }
+        // Jump
+        if (this.jumpMargin > 0 && jumpButtonState == State.Pressed) {
+            this.jumpTimer = JUMP_TIME;
+            this.jumpMargin = 0;
+        }
+        else if (this.jumpTimer > 0 && (jumpButtonState & State.DownOrPressed) == 0) {
+            this.jumpTimer = 0;
+        }
+    }
+    attack(ev) {
+        const EPS = 0.25;
+        const SWORD_RUSH = 1.0;
+        const DOWN_ATTACK_GRAVITY = 8.0;
+        const DOWN_ATTACK_JUMP = -1.5;
+        let down = ev.getStick().y > EPS;
+        // Attack
+        if ((this.canAttack || (!this.canJump && down)) &&
+            ev.getAction("fire2") == State.Pressed) {
+            this.stopMovement();
+            this.jumpTimer = 0;
+            if (!this.canJump && down) {
+                this.downAttacking = true;
+                this.downAttackWait = 0;
+                this.speed.y = DOWN_ATTACK_JUMP;
+                this.target.y = DOWN_ATTACK_GRAVITY;
+                return;
+            }
+            this.attacking = true;
+            this.canAttack = false;
+            this.spr.setFrame(0, 2);
+            if (this.canJump)
+                this.speed.x = SWORD_RUSH * this.dir;
+            if (this.climbing) {
+                this.flip = this.dir > 0 ? Flip.None : Flip.Horizontal;
+            }
+        }
+    }
+    startClimbing(ev) {
         if (!this.climbing &&
             this.touchLadder &&
             (!this.isLadderTop && ev.upPress() ||
@@ -53,54 +90,46 @@ export class Player extends CollisionObject {
             this.stopMovement();
             this.jumpTimer = 0;
         }
-        // Climb
-        if (this.climbing) {
-            this.canAttack = true;
-            if (Math.abs(ev.getStick().x) > EPS)
-                this.dir = Math.sign(ev.getStick().x);
-            if (!this.touchLadder) {
+    }
+    climb(ev) {
+        const EPS = 0.1;
+        const CLIMB_SPEED = 0.5;
+        const CLIB_JUMP_TIME = 15;
+        this.canAttack = true;
+        let jumpButtonState = ev.getAction("fire1");
+        if (Math.abs(ev.getStick().x) > EPS)
+            this.dir = Math.sign(ev.getStick().x);
+        if (!this.touchLadder) {
+            this.climbing = false;
+        }
+        else {
+            this.target.y = CLIMB_SPEED * ev.getStick().y;
+            if (jumpButtonState == State.Pressed) {
                 this.climbing = false;
-            }
-            else {
-                this.target.y = CLIMB_SPEED * ev.getStick().y;
-                if (jumpButtonState == State.Pressed) {
-                    this.climbing = false;
-                    if (ev.getStick().y < EPS) {
-                        this.jumpTimer = JUMP_TIME;
-                    }
+                if (ev.getStick().y < EPS) {
+                    this.jumpTimer = CLIB_JUMP_TIME;
                 }
             }
+        }
+    }
+    control(ev) {
+        const BASE_GRAVITY = 4.0;
+        const BASE_SPEED = 1.0;
+        this.friction.y = 0.1;
+        if (this.downAttacking)
+            this.friction.y = 0.25;
+        if (this.attacking || this.downAttacking)
+            return;
+        this.startClimbing(ev);
+        if (this.climbing) {
+            this.climb(ev);
         }
         else {
             this.target.x = ev.getStick().x * BASE_SPEED;
             this.target.y = BASE_GRAVITY;
-            if (Math.abs(this.target.x) > EPS) {
-                this.flip = this.target.x > 0 ? Flip.None : Flip.Horizontal;
-                this.dir = Math.sign(this.target.x);
-            }
-            // Jump
-            if (this.jumpMargin > 0 && jumpButtonState == State.Pressed) {
-                this.jumpTimer = JUMP_TIME;
-                this.jumpMargin = 0;
-            }
-            else if (this.jumpTimer > 0 && (jumpButtonState & State.DownOrPressed) == 0) {
-                this.jumpTimer = 0;
-            }
+            this.jump(ev);
         }
-        // Attack
-        if (this.canAttack &&
-            ev.getAction("fire2") == State.Pressed) {
-            this.stopMovement();
-            this.jumpTimer = 0;
-            this.attacking = true;
-            this.canAttack = false;
-            this.spr.setFrame(0, 2);
-            if (this.canJump)
-                this.speed.x = SWORD_RUSH * this.dir;
-            if (this.climbing) {
-                this.flip = this.dir > 0 ? Flip.None : Flip.Horizontal;
-            }
-        }
+        this.attack(ev);
     }
     animate(ev) {
         const EPS = 0.01;
@@ -110,6 +139,11 @@ export class Player extends CollisionObject {
         const SPEED_MOD = 6;
         let frame;
         let speed;
+        if (this.downAttacking) {
+            this.spr.setFrame(3, 2);
+            this.sprSword.setFrame(3, 0);
+            return;
+        }
         if (this.attacking) {
             this.spr.animate(2, 0, 3, this.spr.getColumn() == 2 ? 12 : 4, ev.step);
             if (this.spr.getColumn() < 3) {
@@ -160,6 +194,11 @@ export class Player extends CollisionObject {
             this.jumpTimer -= ev.step;
             this.speed.y = JUMP_SPEED;
         }
+        if (this.downAttackWait > 0) {
+            if ((this.downAttackWait -= ev.step) <= 0) {
+                this.downAttacking = false;
+            }
+        }
     }
     updateLogic(ev) {
         this.control(ev);
@@ -170,8 +209,8 @@ export class Player extends CollisionObject {
         this.isLadderTop = false;
     }
     drawSword(c) {
-        const X_OFFSET = [12, 14, 12];
-        const Y_OFFSET = [-6, 1, 6];
+        const X_OFFSET = [12, 14, 12, 3];
+        const Y_OFFSET = [-6, 1, 6, 7];
         let bmp = c.getBitmap("weapons");
         let dir = this.flip == Flip.None ? 1 : -1;
         let px = Math.floor(this.pos.x) + this.renderOffset.x;
@@ -185,7 +224,7 @@ export class Player extends CollisionObject {
         let px = Math.floor(this.pos.x) + this.renderOffset.x;
         let py = Math.floor(this.pos.y) + 1 + this.renderOffset.y;
         c.drawSprite(this.spr, bmp, px - this.spr.width / 2, py - this.spr.height / 2, this.flip);
-        if (this.attacking)
+        if (this.attacking || this.downAttacking)
             this.drawSword(c);
     }
     setPosition(x, y) {
@@ -199,7 +238,12 @@ export class Player extends CollisionObject {
     }
     verticalCollisionEvent(dir, ev) {
         const JUMP_MARGIN = 12;
+        const DOWN_ATTACK_WAIT = 30;
         if (dir > 0) {
+            if (this.downAttacking &&
+                this.downAttackWait <= 0) {
+                this.downAttackWait = DOWN_ATTACK_WAIT;
+            }
             this.climbing = false;
             this.canJump = true;
             this.jumpMargin = JUMP_MARGIN;
