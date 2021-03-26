@@ -6,6 +6,7 @@
         {"name": "sky",  "path": "sky.png"},
         {"name": "background",  "path": "background.png"},
         {"name": "player",  "path": "player.png"},
+        {"name": "weapons",  "path": "weapons.png"},
         {"name": "font",  "path": "font.png"}
     ],
 

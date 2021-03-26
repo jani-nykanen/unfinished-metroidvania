@@ -19,9 +19,13 @@ export class Player extends CollisionObject {
         this.climbing = false;
         this.climbX = 0;
         this.isLadderTop = false;
+        this.canAttack = false;
+        this.attacking = false;
+        this.sprSword = new Sprite(16, 16);
         this.spr = new Sprite(16, 16);
         this.hurtTimer = 0;
         this.flip = Flip.None;
+        this.dir = 1;
     }
     die(ev) {
         return true;
@@ -32,7 +36,10 @@ export class Player extends CollisionObject {
         const BASE_SPEED = 1.0;
         const CLIMB_SPEED = 0.5;
         const JUMP_TIME = 15;
+        const SWORD_RUSH = 1.0;
         let jumpButtonState = ev.getAction("fire1");
+        if (this.attacking)
+            return;
         // Start climbing
         if (!this.climbing &&
             this.touchLadder &&
@@ -44,9 +51,13 @@ export class Player extends CollisionObject {
                 this.pos.y += 6;
             }
             this.stopMovement();
+            this.jumpTimer = 0;
         }
         // Climb
         if (this.climbing) {
+            this.canAttack = true;
+            if (Math.abs(ev.getStick().x) > EPS)
+                this.dir = Math.sign(ev.getStick().x);
             if (!this.touchLadder) {
                 this.climbing = false;
             }
@@ -58,18 +69,37 @@ export class Player extends CollisionObject {
                         this.jumpTimer = JUMP_TIME;
                     }
                 }
-                return;
             }
         }
-        this.target.x = ev.getStick().x * BASE_SPEED;
-        this.target.y = BASE_GRAVITY;
-        // Jump
-        if (this.jumpMargin > 0 && jumpButtonState == State.Pressed) {
-            this.jumpTimer = JUMP_TIME;
-            this.jumpMargin = 0;
+        else {
+            this.target.x = ev.getStick().x * BASE_SPEED;
+            this.target.y = BASE_GRAVITY;
+            if (Math.abs(this.target.x) > EPS) {
+                this.flip = this.target.x > 0 ? Flip.None : Flip.Horizontal;
+                this.dir = Math.sign(this.target.x);
+            }
+            // Jump
+            if (this.jumpMargin > 0 && jumpButtonState == State.Pressed) {
+                this.jumpTimer = JUMP_TIME;
+                this.jumpMargin = 0;
+            }
+            else if (this.jumpTimer > 0 && (jumpButtonState & State.DownOrPressed) == 0) {
+                this.jumpTimer = 0;
+            }
         }
-        else if (this.jumpTimer > 0 && (jumpButtonState & State.DownOrPressed) == 0) {
+        // Attack
+        if (this.canAttack &&
+            ev.getAction("fire2") == State.Pressed) {
+            this.stopMovement();
             this.jumpTimer = 0;
+            this.attacking = true;
+            this.canAttack = false;
+            this.spr.setFrame(0, 2);
+            if (this.canJump)
+                this.speed.x = SWORD_RUSH * this.dir;
+            if (this.climbing) {
+                this.flip = this.dir > 0 ? Flip.None : Flip.Horizontal;
+            }
         }
     }
     animate(ev) {
@@ -80,7 +110,21 @@ export class Player extends CollisionObject {
         const SPEED_MOD = 6;
         let frame;
         let speed;
+        if (this.attacking) {
+            this.spr.animate(2, 0, 3, this.spr.getColumn() == 2 ? 12 : 4, ev.step);
+            if (this.spr.getColumn() < 3) {
+                this.sprSword.setFrame(this.spr.getColumn(), 0);
+                return;
+            }
+            else {
+                this.attacking = false;
+                if (this.climbing) {
+                    this.spr.setFrame(3, 1);
+                }
+            }
+        }
         if (this.climbing) {
+            this.flip = Flip.None;
             if (Math.abs(this.speed.y) > EPS) {
                 this.spr.animate(1, 3, 4, CLIMB_SPEED, ev.step);
             }
@@ -102,9 +146,6 @@ export class Player extends CollisionObject {
             else if (this.speed.y > JUMP_EPS)
                 frame = 2;
             this.spr.setFrame(frame, 1);
-        }
-        if (Math.abs(this.target.x) > EPS) {
-            this.flip = this.target.x > 0 ? Flip.None : Flip.Horizontal;
         }
     }
     updateTimers(ev) {
@@ -128,11 +169,24 @@ export class Player extends CollisionObject {
         this.touchLadder = false;
         this.isLadderTop = false;
     }
+    drawSword(c) {
+        const X_OFFSET = [12, 14, 12];
+        const Y_OFFSET = [-6, 1, 6];
+        let bmp = c.getBitmap("weapons");
+        let dir = this.flip == Flip.None ? 1 : -1;
+        let px = Math.floor(this.pos.x) + this.renderOffset.x;
+        let py = Math.floor(this.pos.y) + 1 + this.renderOffset.y;
+        px += X_OFFSET[this.sprSword.getColumn()] * dir;
+        py += Y_OFFSET[this.sprSword.getColumn()];
+        c.drawSprite(this.sprSword, bmp, px - this.spr.width / 2, py - this.spr.height / 2, this.flip);
+    }
     draw(c) {
         let bmp = c.getBitmap("player");
         let px = Math.floor(this.pos.x) + this.renderOffset.x;
         let py = Math.floor(this.pos.y) + 1 + this.renderOffset.y;
         c.drawSprite(this.spr, bmp, px - this.spr.width / 2, py - this.spr.height / 2, this.flip);
+        if (this.attacking)
+            this.drawSword(c);
     }
     setPosition(x, y) {
         this.pos = new Vector2(x, y);
@@ -149,6 +203,7 @@ export class Player extends CollisionObject {
             this.climbing = false;
             this.canJump = true;
             this.jumpMargin = JUMP_MARGIN;
+            this.canAttack = true;
         }
     }
     ladderCollision(x, y, w, h, ladderTop, ev) {

@@ -43,7 +43,7 @@ export class Camera {
             this.pos.y = py + VERTICAL_DEADZONE * Math.sign(d);
         }
 
-        this.centerOffTarget.x = Math.round(o.getTarget().x * FORWARD);
+        this.centerOffTarget.x = Math.round(ev.getStick().x * FORWARD);
         this.centerOff.x = updateSpeedAxis(this.centerOff.x, 
             this.centerOffTarget.x, MOVE_SPEED_X * ev.step);
     }
