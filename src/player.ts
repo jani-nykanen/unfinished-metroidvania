@@ -1,6 +1,6 @@
 import { Canvas, Flip } from "./core/canvas.js";
 import { GameEvent } from "./core/core.js";
-import { CollisionObject } from "./gameobject.js";
+import { boxOverlay, CollisionObject } from "./gameobject.js";
 import { Sprite } from "./core/sprite.js";
 import { Vector2 } from "./core/vector.js";
 import { State } from "./core/types.js";
@@ -13,6 +13,11 @@ export class Player extends CollisionObject {
     private jumpTimer : number;
     private jumpMargin : number;
     private canJump : boolean;
+
+    private climbing : boolean;
+    private touchLadder : boolean;
+    private isLadderTop : boolean;
+    private climbX : number;
 
     private hurtTimer : number;
 
@@ -35,6 +40,11 @@ export class Player extends CollisionObject {
         this.jumpTimer = 0;
         this.jumpMargin = 0;
 
+        this.touchLadder = false;
+        this.climbing = false;
+        this.climbX = 0;
+        this.isLadderTop = false;
+
         this.spr = new Sprite(16, 16);
     
         this.hurtTimer = 0;
@@ -51,22 +61,63 @@ export class Player extends CollisionObject {
     
     private control(ev : GameEvent) {
 
+        const EPS = 0.1;
         const BASE_GRAVITY = 4.0;
         const BASE_SPEED = 1.0;
+        const CLIMB_SPEED = 0.5;
         const JUMP_TIME = 15;
+
+        let jumpButtonState = ev.getAction("fire1");
+
+        // Start climbing
+        if (!this.climbing &&
+            this.touchLadder && 
+            (!this.isLadderTop && ev.upPress() || 
+            (this.isLadderTop && ev.downPress()))) {
+
+            this.climbing = true;
+            this.pos.x = this.climbX;
+
+            if (this.isLadderTop) {
+
+                this.pos.y += 6;
+            }
+            this.stopMovement();
+        }
+        
+
+        // Climb
+        if (this.climbing) {
+
+            if (!this.touchLadder) {
+
+                this.climbing = false;
+            }
+            else {
+
+                this.target.y = CLIMB_SPEED * ev.getStick().y;
+                if (jumpButtonState == State.Pressed) {
+
+                    this.climbing = false;
+                    if (ev.getStick().y < EPS) {
+
+                        this.jumpTimer =  JUMP_TIME;
+                    }
+                }
+                return;
+            }
+        }
 
         this.target.x = ev.getStick().x * BASE_SPEED;
         this.target.y = BASE_GRAVITY;
 
-        let s = ev.getAction("fire1");
-
-        // Normal & double jump
-        if (this.jumpMargin > 0 && s == State.Pressed) {
+        // Jump
+        if (this.jumpMargin > 0 && jumpButtonState == State.Pressed) {
 
             this.jumpTimer =  JUMP_TIME;
             this.jumpMargin = 0;
         }
-        else if (this.jumpTimer > 0 && (s & State.DownOrPressed) == 0) {
+        else if (this.jumpTimer > 0 && (jumpButtonState & State.DownOrPressed) == 0) {
 
             this.jumpTimer = 0;
         }
@@ -78,10 +129,20 @@ export class Player extends CollisionObject {
         const EPS = 0.01;
         const JUMP_EPS = 0.5;
         const BASE_SPEED = 12;
+        const CLIMB_SPEED = 10;
         const SPEED_MOD = 6;
 
         let frame : number;
         let speed : number;
+
+        if (this.climbing) {
+
+            if (Math.abs(this.speed.y) > EPS) {
+
+                this.spr.animate(1, 3, 4, CLIMB_SPEED, ev.step);
+            }
+            return;
+        }
 
         if (this.canJump) {
 
@@ -142,6 +203,8 @@ export class Player extends CollisionObject {
         this.updateTimers(ev);
 
         this.canJump = false;
+        this.touchLadder = false;
+        this.isLadderTop = false;
     }
 
 
@@ -181,8 +244,25 @@ export class Player extends CollisionObject {
 
         if (dir > 0) {
 
+            this.climbing = false;
+
             this.canJump = true;
             this.jumpMargin = JUMP_MARGIN;
         }
+    }
+
+
+    public ladderCollision(x : number, y : number, w : number, h : number, 
+        ladderTop : boolean, ev : GameEvent) : boolean {
+
+        if (boxOverlay(this.pos, this.center, this.collisionBox, x, y, w, h)) {
+
+            this.climbX = x + w/2;
+            this.touchLadder = !ladderTop || !this.climbing;
+            this.isLadderTop = this.isLadderTop || ladderTop;
+
+            return true;
+        }
+        return false;
     }
 }

@@ -3,6 +3,10 @@ import { Canvas } from "./canvas.js";
 import { InputManager } from "./input.js";
 export class GameEvent {
     constructor(step, core, canvas, input, assets) {
+        this.leftPress = () => this.input.leftPress();
+        this.rightPress = () => this.input.rightPress();
+        this.upPress = () => this.input.upPress();
+        this.downPress = () => this.input.downPress();
         this.isShaking = () => this.canvas.isShaking();
         this.getTilemap = (name) => this.assets.getTilemap(name);
         this.core = core;

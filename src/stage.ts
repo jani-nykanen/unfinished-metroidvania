@@ -180,12 +180,39 @@ export class Stage {
         }
     }
 
+
+    private handleSpecialTileCollision(o : CollisionObject,
+        layer: number, x : number, y : number,
+        colId : number, ev : GameEvent) {
+
+        const LADDER_WIDTH = 8;
+
+        let ladderOff = (16 - LADDER_WIDTH) / 2;
+
+        switch (colId) {
+
+        case 15:
+
+            o.ladderCollision(x*16 + ladderOff, y*16 + 15, 
+                    LADDER_WIDTH, 1, true, ev);
+            o.verticalCollision(x*16, (y+1)*16, 16, 1, ev);
+
+            break;
+            
+        case 31:
+
+            o.ladderCollision(x*16 + ladderOff, y*16+1, 
+                LADDER_WIDTH, 15, false, ev);
+            break;
+        }
+    }
+
     
     public objectCollisions(o : CollisionObject, ev : GameEvent) {
 
         const BOUND_COLLISION_Y_MARGIN = 256;
         const RADIUS = 2;
-        const BASE_TILE_MAX = 16;
+        const BASE_TILE_MAX = 15;
 
         if (!o.doesExist() || o.isDying() || !o.isInCamera()) 
             return;
@@ -210,6 +237,8 @@ export class Stage {
 
                     if (colId <= BASE_TILE_MAX)
                         this.handleBaseTileCollision(o, layer,  x, y, colId-1, ev);
+                    else
+                        this.handleSpecialTileCollision(o, layer, x, y, colId-1, ev);
                 }
             }
         }

@@ -341,5 +341,12 @@ export abstract class CollisionObject extends GameObject {
     }
 
 
+    public ladderCollision(x : number, y : number, w : number, h : number, 
+        ladderTop : boolean, ev : GameEvent) : boolean {
+
+        return false;
+    }
+
+
     public getCollisionBox = () : Vector2 => this.collisionBox.clone();
 }

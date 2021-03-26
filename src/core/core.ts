@@ -39,6 +39,12 @@ export class GameEvent {
     }
 
 
+    public leftPress = () : boolean => this.input.leftPress();
+    public rightPress = () : boolean => this.input.rightPress();
+    public upPress = () : boolean => this.input.upPress();
+    public downPress = () : boolean => this.input.downPress();
+
+
     public changeScene(newScene : Function) {
 
         this.core.changeScene(newScene);

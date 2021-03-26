@@ -181,4 +181,7 @@ export class CollisionObject extends GameObject {
     breakCollision(x, y, w, h, ev) {
         return false;
     }
+    ladderCollision(x, y, w, h, ladderTop, ev) {
+        return false;
+    }
 }

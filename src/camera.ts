@@ -33,14 +33,17 @@ export class Camera {
         const MOVE_SPEED_X = 0.5;
         const VERTICAL_DEADZONE = 16;
 
-        this.pos.x = o.getPos().x;
-        let d = this.pos.y - o.getPos().y;
+        let px = Math.floor(o.getPos().x);
+        let py = Math.floor(o.getPos().y);
+
+        this.pos.x = px;
+        let d = this.pos.y - py;
         if (Math.abs(d) >= VERTICAL_DEADZONE) {
 
-            this.pos.y = o.getPos().y + VERTICAL_DEADZONE * Math.sign(d);
+            this.pos.y = py + VERTICAL_DEADZONE * Math.sign(d);
         }
 
-        this.centerOffTarget.x = o.getTarget().x * FORWARD;
+        this.centerOffTarget.x = Math.round(o.getTarget().x * FORWARD);
         this.centerOff.x = updateSpeedAxis(this.centerOff.x, 
             this.centerOffTarget.x, MOVE_SPEED_X * ev.step);
     }
