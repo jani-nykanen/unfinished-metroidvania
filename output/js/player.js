@@ -10,7 +10,7 @@ var ChargeType;
 })(ChargeType || (ChargeType = {}));
 ;
 export class Player extends CollisionObject {
-    constructor(x, y) {
+    constructor(x, y, projectiles, state) {
         super(x, y);
         this.friction = new Vector2(0.1, 0.1);
         this.hitbox = new Vector2(12, 16);
@@ -29,16 +29,17 @@ export class Player extends CollisionObject {
         this.attacking = false;
         this.chargeAttack = false;
         this.chargeAttackTimer = 0;
-        this.sprSword = new Sprite(16, 16);
+        this.sprWeapon = new Sprite(16, 16);
         this.sprWeaponEffect = new Sprite(32, 32);
         this.shooting = false;
-        this.shootTimer = 0;
         this.spr = new Sprite(16, 16);
         this.hurtTimer = 0;
         this.flip = Flip.None;
         this.dir = 1;
         this.downAttacking = false;
         this.downAttackWait = 0;
+        this.projectiles = projectiles;
+        this.state = state;
     }
     die(ev) {
         return true;
@@ -105,16 +106,20 @@ export class Player extends CollisionObject {
         }
     }
     shoot(ev) {
-        const SHOOT_TIME = 30;
+        const BULLET_SPEED = 4;
+        const FORWARD_OFF = 6;
         let attackButton = ev.getAction("fire3");
-        if (!this.shooting &&
+        if (this.state.getBulletCount() > 0 &&
+            !this.shooting &&
             attackButton == State.Pressed) {
-            this.shootTimer = SHOOT_TIME;
             this.charging = false;
             this.shooting = true;
             if (this.climbing && this.dir < 0) {
                 this.spr.setFrame(this.spr.getColumn() == 3 ? 4 : 3, this.spr.getRow());
             }
+            this.sprWeapon.setFrame(0, 1);
+            this.projectiles.nextObject().spawn(this.pos.x + FORWARD_OFF * this.dir, this.pos.y, this.dir * BULLET_SPEED, 0, 0).setInitialOldPos(this.pos.clone());
+            this.state.addAmmo(-1);
         }
     }
     startClimbing(ev) {
@@ -189,13 +194,13 @@ export class Player extends CollisionObject {
         const EFFECT_SPEED = 4;
         if (this.downAttacking) {
             this.spr.setFrame(3, 2);
-            this.sprSword.setFrame(3, 0);
+            this.sprWeapon.setFrame(3, 0);
             return true;
         }
         if (this.attacking) {
             if (this.chargeAttack) {
                 this.spr.setFrame(1, 2);
-                this.sprSword.setFrame(4, 0);
+                this.sprWeapon.setFrame(4, 0);
                 this.sprWeaponEffect.animate(0, 0, 1, EFFECT_SPEED, ev.step);
                 return true;
             }
@@ -206,7 +211,7 @@ export class Player extends CollisionObject {
                 this.stopAttackAnimation();
             }
             else if (this.spr.getColumn() < 3) {
-                this.sprSword.setFrame(this.spr.getColumn(), 0);
+                this.sprWeapon.setFrame(this.spr.getColumn(), 0);
                 return true;
             }
             else {
@@ -220,6 +225,17 @@ export class Player extends CollisionObject {
         }
         return false;
     }
+    animateShooting(ev) {
+        const BASE_SPEED = 4;
+        const FINAL_FRAME_SPEED = 8;
+        this.sprWeapon.animate(1, 0, 4, this.sprWeapon.getColumn() == 3 ? FINAL_FRAME_SPEED : BASE_SPEED, ev.step);
+        if (this.sprWeapon.getColumn() == 4) {
+            this.shooting = false;
+            if (this.climbing && this.dir < 0) {
+                this.spr.setFrame(this.spr.getColumn() == 3 ? 4 : 3, this.spr.getRow());
+            }
+        }
+    }
     animate(ev) {
         const EPS = 0.01;
         const JUMP_EPS = 0.5;
@@ -229,7 +245,10 @@ export class Player extends CollisionObject {
         let frame;
         let speed;
         // TODO: Split to multiple methods
-        if (this.animateAttack(ev))
+        if (this.shooting) {
+            this.animateShooting(ev);
+        }
+        else if (this.animateAttack(ev))
             return;
         if (this.climbing) {
             if (!this.shooting || this.dir > 0)
@@ -288,14 +307,6 @@ export class Player extends CollisionObject {
                 this.attacking = false;
             }
         }
-        if (this.shooting) {
-            if ((this.shootTimer -= ev.step) <= 0) {
-                this.shooting = false;
-                if (this.climbing && this.dir < 0) {
-                    this.spr.setFrame(this.spr.getColumn() == 3 ? 4 : 3, this.spr.getRow());
-                }
-            }
-        }
     }
     updateLogic(ev) {
         this.control(ev);
@@ -318,9 +329,9 @@ export class Player extends CollisionObject {
         let dir = this.dir;
         let px = Math.floor(this.pos.x) + this.renderOffset.x;
         let py = Math.floor(this.pos.y) + 1 + this.renderOffset.y;
-        px += X_OFFSET[this.sprSword.getColumn()] * dir;
-        py += Y_OFFSET[this.sprSword.getColumn()];
-        c.drawSprite(this.sprSword, bmp, px - this.spr.width / 2, py - this.spr.height / 2, this.flip);
+        px += X_OFFSET[this.sprWeapon.getColumn()] * dir;
+        py += Y_OFFSET[this.sprWeapon.getColumn()];
+        c.drawSprite(this.sprWeapon, bmp, px - this.spr.width / 2, py - this.spr.height / 2, this.flip);
     }
     drawGun(c) {
         let bmp = c.getBitmap("weapons");
@@ -329,7 +340,7 @@ export class Player extends CollisionObject {
         if (this.climbing)
             --py;
         let jump = this.flip == Flip.None ? 0 : 1;
-        c.drawSpriteFrame(this.sprSword, bmp, 0, 1, px + 2 - 20 * jump, py - 7, this.flip);
+        c.drawSprite(this.sprWeapon, bmp, px + 2 - 20 * jump, py - 7, this.flip);
     }
     draw(c) {
         let bmpName = (this.charging &&
