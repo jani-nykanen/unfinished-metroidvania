@@ -6,6 +6,8 @@
         {"name": "sky",  "path": "sky.png"},
         {"name": "background",  "path": "background.png"},
         {"name": "player",  "path": "player.png"},
+        {"name": "playerWhite",  "path": "player_white.png"},
+        {"name": "weaponEffect",  "path": "weapon_effect.png"},
         {"name": "weapons",  "path": "weapons.png"},
         {"name": "font",  "path": "font.png"}
     ],

@@ -3,6 +3,12 @@ import { boxOverlay, CollisionObject } from "./gameobject.js";
 import { Sprite } from "./core/sprite.js";
 import { Vector2 } from "./core/vector.js";
 import { State } from "./core/types.js";
+var ChargeType;
+(function (ChargeType) {
+    ChargeType[ChargeType["Sword"] = 0] = "Sword";
+    ChargeType[ChargeType["Gun"] = 1] = "Gun";
+})(ChargeType || (ChargeType = {}));
+;
 export class Player extends CollisionObject {
     constructor(x, y) {
         super(x, y);
@@ -21,7 +27,12 @@ export class Player extends CollisionObject {
         this.isLadderTop = false;
         this.canAttack = false;
         this.attacking = false;
+        this.chargeAttack = false;
+        this.chargeAttackTimer = 0;
         this.sprSword = new Sprite(16, 16);
+        this.sprWeaponEffect = new Sprite(32, 32);
+        this.shooting = false;
+        this.shootTimer = 0;
         this.spr = new Sprite(16, 16);
         this.hurtTimer = 0;
         this.flip = Flip.None;
@@ -54,13 +65,27 @@ export class Player extends CollisionObject {
         const SWORD_RUSH = 1.0;
         const DOWN_ATTACK_GRAVITY = 8.0;
         const DOWN_ATTACK_JUMP = -1.5;
+        const CHARGE_ATTACK_TIME = 20.0;
         let down = ev.getStick().y > EPS;
+        let attackButton = ev.getAction("fire2");
+        // Charge attack
+        if (this.charging && this.chargeType == ChargeType.Sword) {
+            if ((attackButton & State.DownOrPressed) == 0) {
+                this.charging = false;
+                this.chargeAttack = true;
+                this.attacking = true;
+                this.chargeAttackTimer = CHARGE_ATTACK_TIME;
+                this.sprWeaponEffect.setFrame(0, 0);
+                this.stopMovement();
+            }
+            return;
+        }
         // Attack
         if ((this.canAttack || (!this.canJump && down)) &&
-            ev.getAction("fire2") == State.Pressed) {
+            attackButton == State.Pressed) {
             this.stopMovement();
             this.jumpTimer = 0;
-            if (!this.canJump && down) {
+            if (!this.climbing && !this.canJump && down) {
                 this.downAttacking = true;
                 this.downAttackWait = 0;
                 this.speed.y = DOWN_ATTACK_JUMP;
@@ -69,11 +94,26 @@ export class Player extends CollisionObject {
             }
             this.attacking = true;
             this.canAttack = false;
+            this.charging = false;
+            this.shooting = false;
             this.spr.setFrame(0, 2);
             if (this.canJump)
                 this.speed.x = SWORD_RUSH * this.dir;
             if (this.climbing) {
                 this.flip = this.dir > 0 ? Flip.None : Flip.Horizontal;
+            }
+        }
+    }
+    shoot(ev) {
+        const SHOOT_TIME = 30;
+        let attackButton = ev.getAction("fire3");
+        if (!this.shooting &&
+            attackButton == State.Pressed) {
+            this.shootTimer = SHOOT_TIME;
+            this.charging = false;
+            this.shooting = true;
+            if (this.climbing && this.dir < 0) {
+                this.spr.setFrame(this.spr.getColumn() == 3 ? 4 : 3, this.spr.getRow());
             }
         }
     }
@@ -83,6 +123,8 @@ export class Player extends CollisionObject {
             (!this.isLadderTop && ev.upPress() ||
                 (this.isLadderTop && ev.downPress()))) {
             this.climbing = true;
+            this.charging = false;
+            this.shooting = false;
             this.pos.x = this.climbX;
             if (this.isLadderTop) {
                 this.pos.y += 6;
@@ -115,6 +157,8 @@ export class Player extends CollisionObject {
     control(ev) {
         const BASE_GRAVITY = 4.0;
         const BASE_SPEED = 1.0;
+        if (this.chargeAttack)
+            return;
         this.friction.y = 0.1;
         if (this.downAttacking)
             this.friction.y = 0.25;
@@ -129,7 +173,52 @@ export class Player extends CollisionObject {
             this.target.y = BASE_GRAVITY;
             this.jump(ev);
         }
+        this.shoot(ev);
         this.attack(ev);
+    }
+    stopAttackAnimation() {
+        this.attacking = false;
+        if (this.climbing) {
+            this.spr.setFrame(3, 1);
+        }
+    }
+    animateAttack(ev) {
+        const SWORD_SPEED = 4;
+        const SWORD_RELEASE_TIME = 8;
+        const SWORD_WAIT_TIME = 20;
+        const EFFECT_SPEED = 4;
+        if (this.downAttacking) {
+            this.spr.setFrame(3, 2);
+            this.sprSword.setFrame(3, 0);
+            return true;
+        }
+        if (this.attacking) {
+            if (this.chargeAttack) {
+                this.spr.setFrame(1, 2);
+                this.sprSword.setFrame(4, 0);
+                this.sprWeaponEffect.animate(0, 0, 1, EFFECT_SPEED, ev.step);
+                return true;
+            }
+            this.spr.animate(2, 0, 3, this.spr.getColumn() == 2 ? SWORD_WAIT_TIME : SWORD_SPEED, ev.step);
+            if (this.spr.getColumn() == 2 &&
+                this.spr.getTimer() >= SWORD_RELEASE_TIME &&
+                (ev.getAction("fire2") & State.DownOrPressed) == 0) {
+                this.stopAttackAnimation();
+            }
+            else if (this.spr.getColumn() < 3) {
+                this.sprSword.setFrame(this.spr.getColumn(), 0);
+                return true;
+            }
+            else {
+                this.stopAttackAnimation();
+                if (!this.climbing) {
+                    this.charging = true;
+                    this.chargeTimer = 0;
+                    this.chargeType = ChargeType.Sword;
+                }
+            }
+        }
+        return false;
     }
     animate(ev) {
         const EPS = 0.01;
@@ -139,26 +228,14 @@ export class Player extends CollisionObject {
         const SPEED_MOD = 6;
         let frame;
         let speed;
-        if (this.downAttacking) {
-            this.spr.setFrame(3, 2);
-            this.sprSword.setFrame(3, 0);
+        // TODO: Split to multiple methods
+        if (this.animateAttack(ev))
             return;
-        }
-        if (this.attacking) {
-            this.spr.animate(2, 0, 3, this.spr.getColumn() == 2 ? 12 : 4, ev.step);
-            if (this.spr.getColumn() < 3) {
-                this.sprSword.setFrame(this.spr.getColumn(), 0);
-                return;
-            }
-            else {
-                this.attacking = false;
-                if (this.climbing) {
-                    this.spr.setFrame(3, 1);
-                }
-            }
-        }
         if (this.climbing) {
-            this.flip = Flip.None;
+            if (!this.shooting || this.dir > 0)
+                this.flip = Flip.None;
+            else
+                this.flip = Flip.Horizontal;
             if (Math.abs(this.speed.y) > EPS) {
                 this.spr.animate(1, 3, 4, CLIMB_SPEED, ev.step);
             }
@@ -184,6 +261,8 @@ export class Player extends CollisionObject {
     }
     updateTimers(ev) {
         const JUMP_SPEED = -2.0;
+        const CHARGE_TIME_MAX = 8;
+        const CHARGE_SPEED = 1.5;
         if (this.hurtTimer > 0) {
             this.hurtTimer -= ev.step;
         }
@@ -199,6 +278,24 @@ export class Player extends CollisionObject {
                 this.downAttacking = false;
             }
         }
+        if (this.charging) {
+            this.chargeTimer = (this.chargeTimer + ev.step) % CHARGE_TIME_MAX;
+        }
+        if (this.chargeAttack) {
+            this.speed.x = this.dir * CHARGE_SPEED;
+            if ((this.chargeAttackTimer -= ev.step) <= 0) {
+                this.chargeAttack = false;
+                this.attacking = false;
+            }
+        }
+        if (this.shooting) {
+            if ((this.shootTimer -= ev.step) <= 0) {
+                this.shooting = false;
+                if (this.climbing && this.dir < 0) {
+                    this.spr.setFrame(this.spr.getColumn() == 3 ? 4 : 3, this.spr.getRow());
+                }
+            }
+        }
     }
     updateLogic(ev) {
         this.control(ev);
@@ -208,22 +305,50 @@ export class Player extends CollisionObject {
         this.touchLadder = false;
         this.isLadderTop = false;
     }
+    drawSwordEffect(c) {
+        let bmp = c.getBitmap("weaponEffect");
+        let px = Math.floor(this.pos.x) + this.renderOffset.x;
+        let py = Math.floor(this.pos.y) + 1 + this.renderOffset.y;
+        c.drawSprite(this.sprWeaponEffect, bmp, px - 16 + 8 * this.dir, py - 16, this.flip);
+    }
     drawSword(c) {
-        const X_OFFSET = [12, 14, 12, 3];
-        const Y_OFFSET = [-6, 1, 6, 7];
+        const X_OFFSET = [12, 14, 12, 3, 14];
+        const Y_OFFSET = [-6, 1, 6, 7, 1];
         let bmp = c.getBitmap("weapons");
-        let dir = this.flip == Flip.None ? 1 : -1;
+        let dir = this.dir;
         let px = Math.floor(this.pos.x) + this.renderOffset.x;
         let py = Math.floor(this.pos.y) + 1 + this.renderOffset.y;
         px += X_OFFSET[this.sprSword.getColumn()] * dir;
         py += Y_OFFSET[this.sprSword.getColumn()];
         c.drawSprite(this.sprSword, bmp, px - this.spr.width / 2, py - this.spr.height / 2, this.flip);
     }
-    draw(c) {
-        let bmp = c.getBitmap("player");
+    drawGun(c) {
+        let bmp = c.getBitmap("weapons");
         let px = Math.floor(this.pos.x) + this.renderOffset.x;
         let py = Math.floor(this.pos.y) + 1 + this.renderOffset.y;
-        c.drawSprite(this.spr, bmp, px - this.spr.width / 2, py - this.spr.height / 2, this.flip);
+        if (this.climbing)
+            --py;
+        let jump = this.flip == Flip.None ? 0 : 1;
+        c.drawSpriteFrame(this.sprSword, bmp, 0, 1, px + 2 - 20 * jump, py - 7, this.flip);
+    }
+    draw(c) {
+        let bmpName = (this.charging &&
+            Math.floor(this.chargeTimer / 4) % 2 == 0) ?
+            "playerWhite" : "player";
+        let bmp = c.getBitmap(bmpName);
+        let px = Math.floor(this.pos.x) + this.renderOffset.x;
+        let py = Math.floor(this.pos.y) + 1 + this.renderOffset.y;
+        let frame = this.spr.getColumn();
+        if (this.shooting) {
+            frame += 5;
+        }
+        if (this.attacking && this.chargeAttack) {
+            this.drawSwordEffect(c);
+        }
+        if (this.shooting) {
+            this.drawGun(c);
+        }
+        c.drawSpriteFrame(this.spr, bmp, frame, this.spr.getRow(), px - this.spr.width / 2, py - this.spr.height / 2, this.flip);
         if (this.attacking || this.downAttacking)
             this.drawSword(c);
     }
