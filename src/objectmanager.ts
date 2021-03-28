@@ -34,6 +34,8 @@ export class ObjectManager {
 
     public draw(c : Canvas) {
 
+        this.player.preDraw(c);
+        
         this.projectiles.draw(c);
         this.player.draw(c);
     }

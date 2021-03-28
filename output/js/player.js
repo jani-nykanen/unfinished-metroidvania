@@ -1,8 +1,9 @@
 import { Flip } from "./core/canvas.js";
-import { boxOverlay, CollisionObject } from "./gameobject.js";
+import { boxOverlay, CollisionObject, nextObject } from "./gameobject.js";
 import { Sprite } from "./core/sprite.js";
 import { Vector2 } from "./core/vector.js";
 import { State } from "./core/types.js";
+import { Dust } from "./dust.js";
 var ChargeType;
 (function (ChargeType) {
     ChargeType[ChargeType["Sword"] = 0] = "Sword";
@@ -21,6 +22,9 @@ export class Player extends CollisionObject {
         this.canJump = false;
         this.jumpTimer = 0;
         this.jumpMargin = 0;
+        this.boostJump = false;
+        this.dust = new Array();
+        this.dustTimer = 0;
         this.touchLadder = false;
         this.climbing = false;
         this.climbX = 0;
@@ -47,15 +51,24 @@ export class Player extends CollisionObject {
     jump(ev) {
         const EPS = 0.1;
         const JUMP_TIME = 15;
+        const BOOST_TIME = 60;
         let jumpButtonState = ev.getAction("fire1");
         if (Math.abs(this.target.x) > EPS) {
             this.flip = this.target.x > 0 ? Flip.None : Flip.Horizontal;
             this.dir = Math.sign(this.target.x);
         }
         // Jump
-        if (this.jumpMargin > 0 && jumpButtonState == State.Pressed) {
-            this.jumpTimer = JUMP_TIME;
-            this.jumpMargin = 0;
+        if ((this.jumpMargin > 0 || !this.boostJump) &&
+            jumpButtonState == State.Pressed) {
+            if (this.jumpMargin <= 0) {
+                this.jumpTimer = BOOST_TIME;
+                this.boostJump = true;
+                this.canAttack = true;
+            }
+            else {
+                this.jumpTimer = JUMP_TIME;
+                this.jumpMargin = 0;
+            }
         }
         else if (this.jumpTimer > 0 && (jumpButtonState & State.DownOrPressed) == 0) {
             this.jumpTimer = 0;
@@ -258,9 +271,18 @@ export class Player extends CollisionObject {
             }
         }
     }
+    animateJump(ev) {
+        const JUMP_EPS = 0.5;
+        let row = (this.jumpTimer > 0 && this.boostJump) ? 3 : 1;
+        let frame = 1;
+        if (this.speed.y < -JUMP_EPS)
+            frame = 0;
+        else if (this.speed.y > JUMP_EPS)
+            frame = 2;
+        this.spr.setFrame(frame, row);
+    }
     animate(ev) {
         const EPS = 0.01;
-        const JUMP_EPS = 0.5;
         const BASE_SPEED = 12;
         const CLIMB_SPEED = 10;
         const SPEED_MOD = 6;
@@ -272,6 +294,7 @@ export class Player extends CollisionObject {
         }
         else if (this.animateAttack(ev))
             return;
+        // Climbing
         if (this.climbing) {
             if (!this.shooting || this.dir > 0)
                 this.flip = Flip.None;
@@ -282,6 +305,7 @@ export class Player extends CollisionObject {
             }
             return;
         }
+        // Walking & jumping
         if (this.canJump) {
             if (Math.abs(this.speed.x) < EPS) {
                 this.spr.setFrame(0, 0);
@@ -292,16 +316,13 @@ export class Player extends CollisionObject {
             }
         }
         else {
-            frame = 1;
-            if (this.speed.y < -JUMP_EPS)
-                frame = 0;
-            else if (this.speed.y > JUMP_EPS)
-                frame = 2;
-            this.spr.setFrame(frame, 1);
+            this.animateJump(ev);
         }
     }
     updateTimers(ev) {
         const JUMP_SPEED = -2.0;
+        const BOOST_SPEED = 0.15;
+        const BOOST_CAP = -1.5;
         const CHARGE_TIME_MAX = 8;
         const CHARGE_SPEED = 1.5;
         if (this.hurtTimer > 0) {
@@ -312,7 +333,12 @@ export class Player extends CollisionObject {
         }
         if (this.jumpTimer > 0) {
             this.jumpTimer -= ev.step;
-            this.speed.y = JUMP_SPEED;
+            if (this.boostJump) {
+                this.speed.y = Math.max(BOOST_CAP, this.speed.y - BOOST_SPEED * ev.step);
+            }
+            else {
+                this.speed.y = JUMP_SPEED;
+            }
         }
         if (this.downAttackWait > 0) {
             if ((this.downAttackWait -= ev.step) <= 0) {
@@ -330,10 +356,28 @@ export class Player extends CollisionObject {
             }
         }
     }
+    updateDust(ev) {
+        const DUST_TIME = 6;
+        const DUST_SPEED = 8;
+        const DUST_OFFSET = 2;
+        for (let d of this.dust) {
+            d.update(ev);
+        }
+        if (this.jumpTimer <= 0 || !this.boostJump) {
+            this.dustTimer = 0;
+            return;
+        }
+        if ((this.dustTimer += ev.step) >= DUST_TIME) {
+            nextObject(this.dust, Dust)
+                .spawn(this.pos.x - Math.sign(this.speed.x) * DUST_OFFSET, this.pos.y + 6, DUST_SPEED);
+            this.dustTimer -= DUST_TIME;
+        }
+    }
     updateLogic(ev) {
         this.control(ev);
         this.animate(ev);
         this.updateTimers(ev);
+        this.updateDust(ev);
         this.canJump = false;
         this.touchLadder = false;
         this.isLadderTop = false;
@@ -363,6 +407,11 @@ export class Player extends CollisionObject {
             --py;
         let jump = this.flip == Flip.None ? 0 : 1;
         c.drawSprite(this.sprWeapon, bmp, px + 2 - 20 * jump, py - 7, this.flip);
+    }
+    preDraw(c) {
+        for (let d of this.dust) {
+            d.draw(c);
+        }
     }
     draw(c) {
         let bmpName = (this.charging &&
@@ -404,8 +453,13 @@ export class Player extends CollisionObject {
             }
             this.climbing = false;
             this.canJump = true;
+            this.boostJump = false;
             this.jumpMargin = JUMP_MARGIN;
+            this.jumpTimer = 0;
             this.canAttack = true;
+        }
+        else {
+            this.jumpTimer = 0;
         }
     }
     ladderCollision(x, y, w, h, ladderTop, ev) {

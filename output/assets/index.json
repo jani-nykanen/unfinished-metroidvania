@@ -10,6 +10,7 @@
         {"name": "weaponEffect",  "path": "weapon_effect.png"},
         {"name": "weapons",  "path": "weapons.png"},
         {"name": "projectile",  "path": "projectile.png"},
+        {"name": "dust",  "path": "dust.png"},
         {"name": "font",  "path": "font.png"}
     ],
 

@@ -191,6 +191,7 @@ export class Stage {
 
         switch (colId) {
 
+        // Ladder top
         case 15:
 
             o.ladderCollision(x*16 + ladderOff, y*16 + 15, 
@@ -199,6 +200,21 @@ export class Stage {
 
             break;
             
+        // Breaking tile
+        case 16:
+                
+            if (o.breakCollision(x*16, y*16, 16, 16, ev)) {
+
+                this.layers[layer][y*this.width + x] = 0;
+            }
+            else {
+
+                this.handleBaseTileCollision(o, layer, x, y, 14, ev);
+            }
+
+            break;
+
+        // Ladder bottom
         case 31:
 
             o.ladderCollision(x*16 + ladderOff, y*16+1, 

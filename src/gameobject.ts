@@ -298,6 +298,7 @@ export abstract class CollisionObject extends GameObject {
         const EPS = 0.001;
         const NEAR_MARGIN = 1;
         const FAR_MARGIN = 4;
+        const H_MARGIN = 1;
 
         if (!this.inCamera ||
             (!force && this.disableCollisions) ||
@@ -305,8 +306,8 @@ export abstract class CollisionObject extends GameObject {
             this.speed.y * dir < EPS)
             return false;
 
-        if (this.pos.x + this.collisionBox.x/2 < x || 
-            this.pos.x - this.collisionBox.x/2 >= x + w)
+        if (this.pos.x + this.collisionBox.x/2 < x + H_MARGIN || 
+            this.pos.x - this.collisionBox.x/2 >= x + w - H_MARGIN)
             return false;
 
         let py = this.pos.y + this.center.y + dir * this.collisionBox.y/2;

@@ -109,10 +109,21 @@ export class Stage {
         const LADDER_WIDTH = 8;
         let ladderOff = (16 - LADDER_WIDTH) / 2;
         switch (colId) {
+            // Ladder top
             case 15:
                 o.ladderCollision(x * 16 + ladderOff, y * 16 + 15, LADDER_WIDTH, 1, true, ev);
                 o.verticalCollision(x * 16, (y + 1) * 16, 16, 1, ev);
                 break;
+            // Breaking tile
+            case 16:
+                if (o.breakCollision(x * 16, y * 16, 16, 16, ev)) {
+                    this.layers[layer][y * this.width + x] = 0;
+                }
+                else {
+                    this.handleBaseTileCollision(o, layer, x, y, 14, ev);
+                }
+                break;
+            // Ladder bottom
             case 31:
                 o.ladderCollision(x * 16 + ladderOff, y * 16 + 1, LADDER_WIDTH, 15, false, ev);
                 break;

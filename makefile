@@ -10,3 +10,6 @@ server:
 
 linecount:
 	(cd src; find . -name '*.ts' | xargs wc -l)
+
+artstuff:
+	./dev/imagegen.sh

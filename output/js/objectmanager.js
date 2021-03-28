@@ -13,6 +13,7 @@ export class ObjectManager {
         this.projectiles.update(stage, camera, ev);
     }
     draw(c) {
+        this.player.preDraw(c);
         this.projectiles.draw(c);
         this.player.draw(c);
     }
