@@ -6,7 +6,7 @@ export class Projectile extends CollisionObject {
         super(0, 0);
         this.id = 0;
         this.dir = 0;
-        this.spr = new Sprite(16, 16);
+        this.spr = new Sprite(24, 24);
         this.exist = false;
     }
     die(ev) {
@@ -18,8 +18,8 @@ export class Projectile extends CollisionObject {
         this.exist = false;
     }
     spawn(x, y, speedx, speedy, id) {
-        const WIDTH = [10];
-        const HEIGHT = [2];
+        const WIDTH = [10, 8];
+        const HEIGHT = [2, 8];
         this.pos = new Vector2(x, y);
         this.speed = new Vector2(speedx, speedy);
         this.target = this.speed.clone();

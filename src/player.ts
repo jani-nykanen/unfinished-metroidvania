@@ -196,33 +196,52 @@ export class Player extends CollisionObject {
     }
 
 
-    private shoot(ev : GameEvent) {
+    private shootBullet(id : number, reduceAmmo : number, ev : GameEvent) {
 
         const BULLET_SPEED = 4;
         const FORWARD_OFF = 6;
 
+        this.charging = false;
+        this.shooting = true;
+
+        if (this.climbing && this.dir < 0) {
+
+            this.spr.setFrame(this.spr.getColumn() == 3 ? 4 : 3, 
+                this.spr.getRow());
+        }
+        this.sprWeapon.setFrame(0, 1);
+
+        this.projectiles.nextObject().spawn(
+            this.pos.x + FORWARD_OFF * this.dir, 
+            this.pos.y, 
+            this.dir * BULLET_SPEED, 0, id).setInitialOldPos(this.pos.clone());
+        
+        this.state.addAmmo(-reduceAmmo);
+    }
+
+
+    private shoot(ev : GameEvent) {
+
         let attackButton = ev.getAction("fire3");
 
+        // Charge attack bullet
+        // Charge attack
+        if (this.charging && this.chargeType == ChargeType.Gun) {
+
+            if ((attackButton & State.DownOrPressed) == 0) {
+
+                this.charging = false;
+                this.shootBullet(1, 2, ev);
+            }
+            return;
+        }
+
+        // Normal bullet
         if (this.state.getBulletCount() > 0 &&
-         !this.shooting &&
+            (!this.shooting || (this.sprWeapon.getRow() == 1 && this.sprWeapon.getColumn() == 3)) &&
             attackButton == State.Pressed) {
 
-            this.charging = false;
-            this.shooting = true;
-
-            if (this.climbing && this.dir < 0) {
-
-                this.spr.setFrame(this.spr.getColumn() == 3 ? 4 : 3, 
-                    this.spr.getRow());
-            }
-            this.sprWeapon.setFrame(0, 1);
-
-            this.projectiles.nextObject().spawn(
-                this.pos.x + FORWARD_OFF * this.dir, 
-                this.pos.y, 
-                this.dir * BULLET_SPEED, 0, 0).setInitialOldPos(this.pos.clone());
-            
-            this.state.addAmmo(-1);
+            this.shootBullet(0, 1, ev);
         }
     }
 
@@ -386,20 +405,30 @@ export class Player extends CollisionObject {
     private animateShooting(ev: GameEvent) {
 
         const BASE_SPEED = 4;
-        const FINAL_FRAME_SPEED = 8;
+        const FINAL_FRAME_MIN_WAIT = 8;
+        const FINAL_FRAME_MAX_WAIT = 24;
         
         this.sprWeapon.animate(1, 0, 4, 
-            this.sprWeapon.getColumn() == 3 ? FINAL_FRAME_SPEED : BASE_SPEED, 
+            this.sprWeapon.getColumn() == 3 ? FINAL_FRAME_MAX_WAIT : BASE_SPEED, 
             ev.step);
 
-        if (this.sprWeapon.getColumn() == 4) {
+        if (this.sprWeapon.getColumn() == 4 ||
+            (this.sprWeapon.getColumn() == 3 && 
+            this.sprWeapon.getTimer() >= FINAL_FRAME_MIN_WAIT &&
+            (ev.getAction("fire3") & State.DownOrPressed) == 0)) {
 
             this.shooting = false;
-
             if (this.climbing && this.dir < 0) {
 
                 this.spr.setFrame(this.spr.getColumn() == 3 ? 4 : 3, 
                     this.spr.getRow());
+            }
+
+            if (this.sprWeapon.getColumn() == 4) {
+
+                this.charging = true;
+                this.chargeTimer = 0;
+                this.chargeType = ChargeType.Gun;
             }
         }
     }

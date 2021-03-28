@@ -18,7 +18,7 @@ export class Projectile extends CollisionObject {
 
         this.id = 0;
         this.dir = 0;
-        this.spr = new Sprite(16, 16);
+        this.spr = new Sprite(24, 24);
 
         this.exist = false;
     }
@@ -44,8 +44,8 @@ export class Projectile extends CollisionObject {
         number, speedx : number, speedy : number,
         id : number) : Projectile {
 
-        const WIDTH = [10];
-        const HEIGHT = [2];
+        const WIDTH = [10, 8];
+        const HEIGHT = [2, 8];
 
         this.pos = new Vector2(x, y);
         this.speed = new Vector2(speedx, speedy);

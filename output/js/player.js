@@ -105,21 +105,34 @@ export class Player extends CollisionObject {
             }
         }
     }
-    shoot(ev) {
+    shootBullet(id, reduceAmmo, ev) {
         const BULLET_SPEED = 4;
         const FORWARD_OFF = 6;
+        this.charging = false;
+        this.shooting = true;
+        if (this.climbing && this.dir < 0) {
+            this.spr.setFrame(this.spr.getColumn() == 3 ? 4 : 3, this.spr.getRow());
+        }
+        this.sprWeapon.setFrame(0, 1);
+        this.projectiles.nextObject().spawn(this.pos.x + FORWARD_OFF * this.dir, this.pos.y, this.dir * BULLET_SPEED, 0, id).setInitialOldPos(this.pos.clone());
+        this.state.addAmmo(-reduceAmmo);
+    }
+    shoot(ev) {
         let attackButton = ev.getAction("fire3");
-        if (this.state.getBulletCount() > 0 &&
-            !this.shooting &&
-            attackButton == State.Pressed) {
-            this.charging = false;
-            this.shooting = true;
-            if (this.climbing && this.dir < 0) {
-                this.spr.setFrame(this.spr.getColumn() == 3 ? 4 : 3, this.spr.getRow());
+        // Charge attack bullet
+        // Charge attack
+        if (this.charging && this.chargeType == ChargeType.Gun) {
+            if ((attackButton & State.DownOrPressed) == 0) {
+                this.charging = false;
+                this.shootBullet(1, 2, ev);
             }
-            this.sprWeapon.setFrame(0, 1);
-            this.projectiles.nextObject().spawn(this.pos.x + FORWARD_OFF * this.dir, this.pos.y, this.dir * BULLET_SPEED, 0, 0).setInitialOldPos(this.pos.clone());
-            this.state.addAmmo(-1);
+            return;
+        }
+        // Normal bullet
+        if (this.state.getBulletCount() > 0 &&
+            (!this.shooting || (this.sprWeapon.getRow() == 1 && this.sprWeapon.getColumn() == 3)) &&
+            attackButton == State.Pressed) {
+            this.shootBullet(0, 1, ev);
         }
     }
     startClimbing(ev) {
@@ -227,12 +240,21 @@ export class Player extends CollisionObject {
     }
     animateShooting(ev) {
         const BASE_SPEED = 4;
-        const FINAL_FRAME_SPEED = 8;
-        this.sprWeapon.animate(1, 0, 4, this.sprWeapon.getColumn() == 3 ? FINAL_FRAME_SPEED : BASE_SPEED, ev.step);
-        if (this.sprWeapon.getColumn() == 4) {
+        const FINAL_FRAME_MIN_WAIT = 8;
+        const FINAL_FRAME_MAX_WAIT = 24;
+        this.sprWeapon.animate(1, 0, 4, this.sprWeapon.getColumn() == 3 ? FINAL_FRAME_MAX_WAIT : BASE_SPEED, ev.step);
+        if (this.sprWeapon.getColumn() == 4 ||
+            (this.sprWeapon.getColumn() == 3 &&
+                this.sprWeapon.getTimer() >= FINAL_FRAME_MIN_WAIT &&
+                (ev.getAction("fire3") & State.DownOrPressed) == 0)) {
             this.shooting = false;
             if (this.climbing && this.dir < 0) {
                 this.spr.setFrame(this.spr.getColumn() == 3 ? 4 : 3, this.spr.getRow());
+            }
+            if (this.sprWeapon.getColumn() == 4) {
+                this.charging = true;
+                this.chargeTimer = 0;
+                this.chargeType = ChargeType.Gun;
             }
         }
     }
