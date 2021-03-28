@@ -6,11 +6,15 @@ export const updateSpeedAxis = (speed, target, step) => {
     }
     return Math.max(target, speed - step);
 };
+// No better place for these
 export const boxOverlay = (pos, center, hitbox, x, y, w, h) => {
     let px = pos.x + center.x - hitbox.x / 2;
     let py = pos.y + center.y - hitbox.y / 2;
     return px + hitbox.x >= x && px < x + w &&
         py + hitbox.y >= y && py < y + h;
+};
+export const boxOverlayRect = (rect, x, y, w, h) => {
+    return boxOverlay(new Vector2(rect.x, rect.y), new Vector2(), new Vector2(rect.w, rect.h), x, y, w, h);
 };
 export class ExistingObject {
     constructor() {
@@ -117,8 +121,10 @@ export class CollisionObject extends GameObject {
     constructor(x, y) {
         super(x, y);
         this.getCollisionBox = () => this.collisionBox.clone();
+        this.doesCollideIfDying = () => this.collideIfDying;
         this.collisionBox = new Vector2();
         this.bounceFactor = 0;
+        this.collideIfDying = false;
         this.disableCollisions = false;
     }
     wallCollisionEvent(dir, ev) { }

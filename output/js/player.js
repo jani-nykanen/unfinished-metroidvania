@@ -1,7 +1,7 @@
 import { Flip } from "./core/canvas.js";
-import { boxOverlay, CollisionObject, nextObject } from "./gameobject.js";
+import { boxOverlay, boxOverlayRect, CollisionObject, nextObject } from "./gameobject.js";
 import { Sprite } from "./core/sprite.js";
-import { Vector2 } from "./core/vector.js";
+import { Rect, Vector2 } from "./core/vector.js";
 import { State } from "./core/types.js";
 import { Dust } from "./dust.js";
 var ChargeType;
@@ -33,10 +33,11 @@ export class Player extends CollisionObject {
         this.attacking = false;
         this.chargeAttack = false;
         this.chargeAttackTimer = 0;
+        this.swordHitbox = new Rect();
         this.sprWeapon = new Sprite(16, 16);
         this.sprWeaponEffect = new Sprite(32, 32);
-        this.shooting = false;
         this.spr = new Sprite(16, 16);
+        this.shooting = false;
         this.hurtTimer = 0;
         this.flip = Flip.None;
         this.dir = 1;
@@ -88,6 +89,7 @@ export class Player extends CollisionObject {
                 this.charging = false;
                 this.chargeAttack = true;
                 this.attacking = true;
+                this.jumpTimer = 0;
                 this.chargeAttackTimer = CHARGE_ATTACK_TIME;
                 this.sprWeaponEffect.setFrame(0, 0);
                 this.stopMovement();
@@ -373,11 +375,36 @@ export class Player extends CollisionObject {
             this.dustTimer -= DUST_TIME;
         }
     }
+    computeSwordHitbox() {
+        const X_OFFSET = 14;
+        const Y_OFFSET = -2;
+        const WIDTH = 12;
+        const HEIGHT = 16;
+        const CHARGE_WIDTH = 16;
+        const CHARGE_HEIGHT = 20;
+        const DOWN_ATTACK_XOFF = 3;
+        const DOWN_ATTACK_YOFF = 8;
+        const DOWN_ATTACK_WIDTH = 6;
+        const DOWN_ATTACK_HEIGHT = 12;
+        if (this.attacking) {
+            this.swordHitbox.x = this.pos.x + X_OFFSET * this.dir;
+            this.swordHitbox.y = this.pos.y + Y_OFFSET;
+            this.swordHitbox.w = this.chargeAttack ? CHARGE_WIDTH : WIDTH;
+            this.swordHitbox.h = this.chargeAttack ? CHARGE_HEIGHT : HEIGHT;
+        }
+        else if (this.downAttacking) {
+            this.swordHitbox.x = this.pos.x + DOWN_ATTACK_XOFF * this.dir;
+            this.swordHitbox.y = this.pos.y + DOWN_ATTACK_YOFF;
+            this.swordHitbox.w = DOWN_ATTACK_WIDTH;
+            this.swordHitbox.h = DOWN_ATTACK_HEIGHT;
+        }
+    }
     updateLogic(ev) {
         this.control(ev);
         this.animate(ev);
         this.updateTimers(ev);
         this.updateDust(ev);
+        this.computeSwordHitbox();
         this.canJump = false;
         this.touchLadder = false;
         this.isLadderTop = false;
@@ -433,6 +460,17 @@ export class Player extends CollisionObject {
         c.drawSpriteFrame(this.spr, bmp, frame, this.spr.getRow(), px - this.spr.width / 2, py - this.spr.height / 2, this.flip);
         if (this.attacking || this.downAttacking)
             this.drawSword(c);
+        // TEMP
+        /*
+        if (this.attacking || this.downAttacking) {
+
+            c.setFillColor(255, 0, 0);
+            c.fillRect(this.swordHitbox.x - this.swordHitbox.w/2,
+                this.swordHitbox.y - this.swordHitbox.h/2,
+                this.swordHitbox.w,
+                this.swordHitbox.h);
+        }
+        */
     }
     setPosition(x, y) {
         this.pos = new Vector2(x, y);
@@ -470,5 +508,12 @@ export class Player extends CollisionObject {
             return true;
         }
         return false;
+    }
+    canHurt() {
+        return (this.attacking && ((!this.chargeAttack && this.spr.getColumn() < 2) || this.chargeAttack)) ||
+            (this.downAttacking && this.downAttackWait <= 0);
+    }
+    breakCollision(x, y, w, h, ev) {
+        return this.canHurt && boxOverlayRect(this.swordHitbox, x, y, w, h);
     }
 }

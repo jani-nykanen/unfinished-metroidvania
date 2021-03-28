@@ -11,6 +11,8 @@ export class Projectile extends CollisionObject {
     private id : number;
     private dir : number;
 
+    private isExplosive : boolean;
+
     
     constructor() {
 
@@ -20,6 +22,7 @@ export class Projectile extends CollisionObject {
         this.dir = 0;
         this.spr = new Sprite(24, 24);
 
+        this.isExplosive = false;
         this.exist = false;
     }
 
@@ -46,11 +49,15 @@ export class Projectile extends CollisionObject {
 
         const WIDTH = [10, 8];
         const HEIGHT = [2, 8];
+        const IS_EXPLOSIVE = [1];
 
         this.pos = new Vector2(x, y);
         this.speed = new Vector2(speedx, speedy);
         this.target = this.speed.clone();
         this.id = id;
+
+        this.isExplosive = IS_EXPLOSIVE.includes(id);
+        this.collideIfDying = this.isExplosive;
 
         this.collisionBox = new Vector2(WIDTH[id], HEIGHT[id]);
         this.hitbox = this.collisionBox.clone();
@@ -83,6 +90,7 @@ export class Projectile extends CollisionObject {
 
     private kill(ev : GameEvent) {
 
+
         this.dying = true;
         this.spr.setFrame(4, this.spr.getRow());
 
@@ -113,4 +121,17 @@ export class Projectile extends CollisionObject {
 
         c.drawSprite(this.spr, bmp, px, py);
     }
+
+
+    public breakCollision(x : number, y : number, w : number, h : number, ev : GameEvent) : boolean {
+
+        const EXP_RADIUS = 10;
+
+        return this.isExplosive && this.dying &&
+            (this.pos.x + EXP_RADIUS > x &&
+             this.pos.x - EXP_RADIUS < x + w &&
+             this.pos.y + EXP_RADIUS > y &&
+             this.pos.y - EXP_RADIUS < y + h);
+    }
+
 }

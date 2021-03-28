@@ -2,7 +2,7 @@ import { Camera } from "./camera.js";
 import { Canvas } from "./core/canvas.js";
 import { GameEvent } from "./core/core.js";
 import { Sprite } from "./core/sprite.js";
-import { Vector2 } from "./core/vector.js";
+import { Rect, Vector2 } from "./core/vector.js";
 
 
 export const updateSpeedAxis = (speed : number, target : number, step : number) : number => {
@@ -15,6 +15,8 @@ export const updateSpeedAxis = (speed : number, target : number, step : number) 
 }
 
 
+// No better place for these
+
 export const boxOverlay = (pos : Vector2, center : Vector2, hitbox : Vector2, 
     x : number, y : number, w : number, h : number) : boolean => {
 
@@ -23,6 +25,17 @@ export const boxOverlay = (pos : Vector2, center : Vector2, hitbox : Vector2,
 
     return px + hitbox.x >= x && px < x+w &&
            py + hitbox.y >= y && py < y+h;
+}
+
+
+export const boxOverlayRect = (rect : Rect, 
+    x : number, y : number, w : number, h : number) : boolean => {
+
+    return boxOverlay(
+        new Vector2(rect.x, rect.y), 
+        new Vector2(), 
+        new Vector2(rect.w, rect.h), 
+        x, y, w, h);
 }
 
 
@@ -222,6 +235,7 @@ export abstract class GameObject extends WeakGameObject {
         this.target.zeros();
     }
 
+
     public getSpeed = () => this.speed.clone();
     public getTarget = () => this.target.clone();
 }
@@ -233,6 +247,7 @@ export abstract class CollisionObject extends GameObject {
     protected collisionBox : Vector2;
     protected bounceFactor : number;
     protected disableCollisions : boolean;
+    protected collideIfDying : boolean;
 
 
     constructor(x : number, y : number) {
@@ -242,6 +257,7 @@ export abstract class CollisionObject extends GameObject {
         this.collisionBox = new Vector2();
         this.bounceFactor = 0;
 
+        this.collideIfDying = false;
         this.disableCollisions = false;
     }
 
@@ -350,4 +366,5 @@ export abstract class CollisionObject extends GameObject {
 
 
     public getCollisionBox = () : Vector2 => this.collisionBox.clone();
+    public doesCollideIfDying = () : boolean => this.collideIfDying;
 }

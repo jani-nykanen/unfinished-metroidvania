@@ -186,6 +186,7 @@ export class Stage {
         colId : number, ev : GameEvent) {
 
         const LADDER_WIDTH = 8;
+        const BREAK_TOP_OFFSET = 2;
 
         let ladderOff = (16 - LADDER_WIDTH) / 2;
 
@@ -203,7 +204,7 @@ export class Stage {
         // Breaking tile
         case 16:
                 
-            if (o.breakCollision(x*16, y*16, 16, 16, ev)) {
+            if (o.breakCollision(x*16, y*16 + BREAK_TOP_OFFSET, 16, 16-BREAK_TOP_OFFSET, ev)) {
 
                 this.layers[layer][y*this.width + x] = 0;
             }
@@ -230,7 +231,7 @@ export class Stage {
         const RADIUS = 2;
         const BASE_TILE_MAX = 15;
 
-        if (!o.doesExist() || o.isDying() || !o.isInCamera()) 
+        if (!o.doesExist() || (o.isDying() && !o.doesCollideIfDying()) || !o.isInCamera()) 
             return;
 
         let px = Math.floor(o.getPos().x / 16);
