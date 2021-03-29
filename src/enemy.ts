@@ -1,9 +1,10 @@
 import { Canvas, Flip } from "./core/canvas.js";
 import { GameEvent } from "./core/core.js";
-import { CollisionObject } from "./gameobject.js";
+import { boxOverlay, CollisionObject } from "./gameobject.js";
 import { Player } from "./player.js";
 import { Sprite } from "./core/sprite.js";
 import { Vector2 } from "./core/vector.js";
+import { Projectile } from "./projectile.js";
 
 
 export abstract class Enemy extends CollisionObject {
@@ -88,6 +89,21 @@ export abstract class Enemy extends CollisionObject {
 
         this.playerEvent(pl, ev);
 
+        let swordHitbox = pl.getSwordHitbox();
+        if (pl.canHurt() && boxOverlay(this.pos, this.center, this.collisionBox,
+            swordHitbox.x - swordHitbox.w/2, swordHitbox.y - swordHitbox.h/2,
+            swordHitbox.w, swordHitbox.h)) {
+
+            this.kill(ev);
+            return true;
+        }
+
+        return false;
+    }
+
+
+    public projectileCollision(p : Projectile, ev : GameEvent) : boolean {
+
         return false;
     }
 
@@ -115,6 +131,13 @@ export abstract class Enemy extends CollisionObject {
     protected verticalCollisionEvent(dir : number, ev : GameEvent) {
 
         this.canJump = true;
+    }
+
+
+    public kill(ev : GameEvent) {
+
+        this.dying = true;
+        this.spr.setFrame(0, 0,);
     }
 
 }

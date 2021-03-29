@@ -513,6 +513,9 @@ export class Player extends CollisionObject {
         return (this.attacking && ((!this.chargeAttack && this.spr.getColumn() < 2) || this.chargeAttack)) ||
             (this.downAttacking && this.downAttackWait <= 0);
     }
+    getSwordHitbox() {
+        return this.swordHitbox.clone();
+    }
     breakCollision(x, y, w, h, ev) {
         return this.canHurt && boxOverlayRect(this.swordHitbox, x, y, w, h);
     }

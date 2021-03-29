@@ -1,4 +1,4 @@
-import { CollisionObject } from "./gameobject.js";
+import { boxOverlay, CollisionObject } from "./gameobject.js";
 import { Sprite } from "./core/sprite.js";
 import { Vector2 } from "./core/vector.js";
 export class Enemy extends CollisionObject {
@@ -41,6 +41,14 @@ export class Enemy extends CollisionObject {
         if (this.isDeactivated())
             return false;
         this.playerEvent(pl, ev);
+        let swordHitbox = pl.getSwordHitbox();
+        if (pl.canHurt() && boxOverlay(this.pos, this.center, this.collisionBox, swordHitbox.x - swordHitbox.w / 2, swordHitbox.y - swordHitbox.h / 2, swordHitbox.w, swordHitbox.h)) {
+            this.kill(ev);
+            return true;
+        }
+        return false;
+    }
+    projectileCollision(p, ev) {
         return false;
     }
     enemyCollisionEvent(dirx, diry, ev) { }
@@ -56,5 +64,9 @@ export class Enemy extends CollisionObject {
     }
     verticalCollisionEvent(dir, ev) {
         this.canJump = true;
+    }
+    kill(ev) {
+        this.dying = true;
+        this.spr.setFrame(0, 0);
     }
 }

@@ -839,6 +839,12 @@ export class Player extends CollisionObject {
     }
 
 
+    public getSwordHitbox() : Rect {
+
+        return this.swordHitbox.clone();
+    }
+
+
     public breakCollision(x : number, y : number, w : number, h : number, ev : GameEvent) : boolean {
 
         return this.canHurt && boxOverlayRect(this.swordHitbox, x, y, w, h);
