@@ -6,9 +6,10 @@ export class Enemy extends CollisionObject {
         super(x, y);
         this.isDeactivated = () => (this.dying || !this.exist || !this.inCamera);
         this.startPos = this.pos.clone();
+        this.dir = 0;
         this.id = id;
         this.spr = new Sprite(16, 16);
-        this.spr.setFrame(0, id);
+        this.spr.setFrame(0, id + 1);
         // Default values, in the case I forget to set them
         // separately for each enemy
         this.friction = new Vector2(0.1, 0.1);
@@ -28,7 +29,7 @@ export class Enemy extends CollisionObject {
         this.canJump = false;
     }
     draw(c) {
-        if (this.dying || !this.inCamera || !this.exist)
+        if (!this.inCamera || !this.exist)
             return;
         let bmp = c.getBitmap("enemies");
         let px = Math.round(this.pos.x) + this.renderOffset.x - this.spr.width / 2;
@@ -37,6 +38,9 @@ export class Enemy extends CollisionObject {
     }
     playerEvent(pl, ev) { }
     playerCollision(pl, ev) {
+        if (this.isDeactivated())
+            return false;
+        this.playerEvent(pl, ev);
         return false;
     }
     enemyCollisionEvent(dirx, diry, ev) { }

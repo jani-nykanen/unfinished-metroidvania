@@ -15,6 +15,7 @@ export abstract class Enemy extends CollisionObject {
 
     protected renderOffset : Vector2;
     protected canJump : boolean;
+    protected dir : number;
 
 
     constructor(x : number, y : number, id = 0) {
@@ -23,9 +24,10 @@ export abstract class Enemy extends CollisionObject {
 
         this.startPos = this.pos.clone();
 
+        this.dir = 0;
         this.id = id;
         this.spr = new Sprite(16, 16);
-        this.spr.setFrame(0, id);
+        this.spr.setFrame(0, id+1);
 
         // Default values, in the case I forget to set them
         // separately for each enemy
@@ -65,7 +67,7 @@ export abstract class Enemy extends CollisionObject {
 
     public draw(c : Canvas) {
 
-        if (this.dying || !this.inCamera || !this.exist)
+        if (!this.inCamera || !this.exist)
             return;
 
         let bmp = c.getBitmap("enemies");
@@ -81,6 +83,10 @@ export abstract class Enemy extends CollisionObject {
 
 
     public playerCollision(pl : Player, ev : GameEvent) : boolean {
+
+        if (this.isDeactivated()) return false;
+
+        this.playerEvent(pl, ev);
 
         return false;
     }

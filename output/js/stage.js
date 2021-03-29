@@ -203,7 +203,7 @@ export class Stage {
                         break;
                 }
                 if (tid >= 16 && tid < 32) {
-                    // objects.addEnemy(x, y, tid-16);
+                    objects.addEnemy(tid - 16, x, y);
                 }
             }
         }

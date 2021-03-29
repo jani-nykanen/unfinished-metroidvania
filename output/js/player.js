@@ -323,7 +323,7 @@ export class Player extends CollisionObject {
     }
     updateTimers(ev) {
         const JUMP_SPEED = -2.0;
-        const BOOST_SPEED = 0.15;
+        const BOOST_SPEED = 0.175;
         const BOOST_CAP = -1.5;
         const CHARGE_TIME_MAX = 8;
         const CHARGE_SPEED = 1.5;
