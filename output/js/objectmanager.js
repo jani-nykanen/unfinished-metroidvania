@@ -17,4 +17,10 @@ export class ObjectManager {
         this.projectiles.draw(c);
         this.player.draw(c);
     }
+    setPlayerLocation(x, y) {
+        this.player.setPosition(x * 16 + 8, y * 16 + 8);
+    }
+    setInitialCameraPosition(cam) {
+        cam.setPosition(this.player.getPos());
+    }
 }

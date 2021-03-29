@@ -110,4 +110,10 @@ export class Camera {
         this.pos.x + this.centerOff.x - this.width/2, 
         this.pos.y + this.centerOff.y - this.height/2);
 
+    
+    public setPosition(pos : Vector2) {
+
+        this.pos = pos.clone();
+    }
+
 }

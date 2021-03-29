@@ -59,4 +59,7 @@ export class Camera {
     use(c) {
         c.moveTo(Math.floor(-this.pos.x - this.centerOff.x + this.width / 2), Math.floor(-this.pos.y - this.centerOff.y + this.height / 2));
     }
+    setPosition(pos) {
+        this.pos = pos.clone();
+    }
 }

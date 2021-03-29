@@ -8,9 +8,11 @@ export class GameScene {
         this.stage = new Stage(ev);
         this.state = new GameState();
         this.objects = new ObjectManager(this.state);
+        this.stage.parseObjects(this.objects);
+        this.objects.setInitialCameraPosition(this.camera);
     }
     update(ev) {
-        this.stage.update(ev);
+        this.stage.update(this.camera, ev);
         this.objects.update(this.stage, this.camera, ev);
         this.stage.restrictCamera(this.camera);
     }

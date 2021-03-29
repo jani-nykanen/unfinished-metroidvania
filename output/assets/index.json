@@ -11,6 +11,8 @@
         {"name": "weapons",  "path": "weapons.png"},
         {"name": "projectile",  "path": "projectile.png"},
         {"name": "dust",  "path": "dust.png"},
+        {"name": "particles",  "path": "particles.png"},
+        {"name": "enemies",  "path": "enemies.png"},
         {"name": "font",  "path": "font.png"}
     ],
 

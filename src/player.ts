@@ -622,7 +622,7 @@ export class Player extends CollisionObject {
         const CHARGE_HEIGHT = 20;
         const DOWN_ATTACK_XOFF = 3;
         const DOWN_ATTACK_YOFF = 8;
-        const DOWN_ATTACK_WIDTH = 6;
+        const DOWN_ATTACK_WIDTH = 8;
         const DOWN_ATTACK_HEIGHT = 12;
 
         if (this.attacking) {
@@ -768,13 +768,12 @@ export class Player extends CollisionObject {
                 this.swordHitbox.h);
         }
         */
-        
     }
 
 
     public setPosition(x : number, y : number) {
 
-        this.pos = new Vector2(x, y);
+        this.pos = new Vector2(x, y - this.renderOffset.y);
     }
 
 

@@ -384,7 +384,7 @@ export class Player extends CollisionObject {
         const CHARGE_HEIGHT = 20;
         const DOWN_ATTACK_XOFF = 3;
         const DOWN_ATTACK_YOFF = 8;
-        const DOWN_ATTACK_WIDTH = 6;
+        const DOWN_ATTACK_WIDTH = 8;
         const DOWN_ATTACK_HEIGHT = 12;
         if (this.attacking) {
             this.swordHitbox.x = this.pos.x + X_OFFSET * this.dir;
@@ -473,7 +473,7 @@ export class Player extends CollisionObject {
         */
     }
     setPosition(x, y) {
-        this.pos = new Vector2(x, y);
+        this.pos = new Vector2(x, y - this.renderOffset.y);
     }
     hurt(ev) {
         const HURT_TIME = 60;

@@ -1,3 +1,6 @@
+import { Vector2 } from "./core/vector.js";
+import { ObjectPool } from "./objectpool.js";
+import { Particle } from "./particles.js";
 // For collisions
 const COL_DOWN = 0b0001;
 const COL_WALL_LEFT = 0b0010;
@@ -27,6 +30,7 @@ export class Stage {
         this.collisionMap = ev.getTilemap("collisions").cloneLayer(0);
         this.width = baseMap.width;
         this.height = baseMap.height;
+        this.particles = new ObjectPool(Particle);
         this.cloudPos = 0;
     }
     getTile(l, x, y, def = 0) {
@@ -41,9 +45,10 @@ export class Stage {
             return def;
         return this.collisionMap[i];
     }
-    update(ev) {
+    update(cam, ev) {
         const CLOUD_SPEED = 0.5;
         this.cloudPos = (this.cloudPos + CLOUD_SPEED * ev.step) % 96;
+        this.particles.update(this, cam, ev);
     }
     drawBackground(c, cam) {
         const CLOUD_Y = 48;
@@ -88,6 +93,7 @@ export class Stage {
                 }
             }
         }
+        this.particles.draw(c);
     }
     handleBaseTileCollision(o, layer, x, y, colId, ev) {
         let c = COLLISION_TABLE[colId];
@@ -105,6 +111,22 @@ export class Stage {
             o.wallCollision(x * 16, y * 16, 16, 1, ev);
         }
     }
+    spawnParticles(x, y) {
+        const PARTICLE_COUNT = 4;
+        const ANGLE_STEP = Math.PI * 2 / PARTICLE_COUNT;
+        const SPEED_MIN = 1.75;
+        const SPEED_MAX = 2.25;
+        const JUMP_Y = -1.0;
+        const ANGLE_START = Math.PI / 4;
+        const PARTICLE_TIME = 300;
+        let angle, speed;
+        for (let i = 0; i < PARTICLE_COUNT; ++i) {
+            angle = ANGLE_START + i * ANGLE_STEP;
+            speed = SPEED_MIN + Math.random() * (SPEED_MAX - SPEED_MIN);
+            this.particles.nextObject()
+                .spawn(x, y, new Vector2(Math.cos(angle) * speed, Math.sin(angle) * speed + JUMP_Y), Math.floor(Math.random() * 4), 0, PARTICLE_TIME);
+        }
+    }
     handleSpecialTileCollision(o, layer, x, y, colId, ev) {
         const LADDER_WIDTH = 8;
         const BREAK_TOP_OFFSET = 2;
@@ -117,8 +139,9 @@ export class Stage {
                 break;
             // Breaking tile
             case 16:
-                if (o.breakCollision(x * 16, y * 16 + BREAK_TOP_OFFSET, 16, 16 - BREAK_TOP_OFFSET, ev)) {
+                if (o.breakCollision(x * 16, y * 16 + BREAK_TOP_OFFSET, 16, 16, ev)) {
                     this.layers[layer][y * this.width + x] = 0;
+                    this.spawnParticles(x * 16 + 8, y * 16 + 8);
                 }
                 else {
                     this.handleBaseTileCollision(o, layer, x, y, 14, ev);
@@ -161,5 +184,28 @@ export class Stage {
     }
     restrictCamera(cam) {
         cam.restrictCamera(0, 0, this.width * 16, this.height * 16);
+    }
+    parseObjects(objects) {
+        const FIRST_OBJECT_INDEX = 257;
+        let tid;
+        for (let y = 0; y < this.height; ++y) {
+            for (let x = 0; x < this.width; ++x) {
+                tid = this.layers[this.layers.length - 1][y * this.width + x];
+                if (tid < FIRST_OBJECT_INDEX)
+                    continue;
+                tid -= FIRST_OBJECT_INDEX;
+                switch (tid) {
+                    // Player
+                    case 0:
+                        objects.setPlayerLocation(x, y);
+                        break;
+                    default:
+                        break;
+                }
+                if (tid >= 16 && tid < 32) {
+                    // objects.addEnemy(x, y, tid-16);
+                }
+            }
+        }
     }
 }
