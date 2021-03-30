@@ -1,10 +1,11 @@
 import { Canvas, Flip } from "./core/canvas.js";
 import { GameEvent } from "./core/core.js";
-import { boxOverlay, CollisionObject } from "./gameobject.js";
+import { boxOverlay, CollisionObject, nextObject } from "./gameobject.js";
 import { Player } from "./player.js";
 import { Sprite } from "./core/sprite.js";
 import { Vector2 } from "./core/vector.js";
 import { Projectile } from "./projectile.js";
+import { FlyingText } from "./flyingtext.js";
 
 
 export abstract class Enemy extends CollisionObject {
@@ -17,11 +18,21 @@ export abstract class Enemy extends CollisionObject {
     protected renderOffset : Vector2;
     protected canJump : boolean;
     protected dir : number;
+    protected mass : number;
 
+    protected health : number;
+    protected maxHealth : number;
 
-    constructor(x : number, y : number, id = 0) {
+    private hurtTimer : number;
+    private lastHitId : number;
+
+    
+    constructor(x : number, y : number, id = 0, health = 1) {
 
         super(x, y);
+
+        this.maxHealth = health;
+        this.health = this.maxHealth;
 
         this.startPos = this.pos.clone();
 
@@ -39,6 +50,11 @@ export abstract class Enemy extends CollisionObject {
         this.renderOffset = new Vector2();
 
         this.canJump = false;
+    
+        this.hurtTimer = 0;
+        this.mass = 1;
+    
+        this.lastHitId = -1;
     }
 
     
@@ -51,7 +67,7 @@ export abstract class Enemy extends CollisionObject {
     protected die(ev : GameEvent) : boolean {
 
         const DEATH_SPEED = 4;
-
+        
         this.spr.animate(0, 0, 4, DEATH_SPEED, ev.step);
         
         return this.spr.getColumn() == 4;
@@ -59,6 +75,9 @@ export abstract class Enemy extends CollisionObject {
 
 
     public updateLogic(ev : GameEvent) {
+
+        if (this.hurtTimer > 0)
+            this.hurtTimer -= ev.step;
 
         this.updateAI(ev);
 
@@ -69,6 +88,9 @@ export abstract class Enemy extends CollisionObject {
     public draw(c : Canvas) {
 
         if (!this.inCamera || !this.exist)
+            return;
+
+        if (this.hurtTimer > 0 && Math.floor(this.hurtTimer/4) % 2 == 1)
             return;
 
         let bmp = c.getBitmap("enemies");
@@ -83,24 +105,54 @@ export abstract class Enemy extends CollisionObject {
     protected playerEvent(pl : Player, ev : GameEvent) {}
 
 
-    public playerCollision(pl : Player, ev : GameEvent) : boolean {
+    private hurt(dmg : number, flyingText : Array<FlyingText>, ev : GameEvent) {
+
+        const HURT_TIME = 30;
+        const MESSAGE_SPEED = 1;
+
+        if ((this.health -= dmg) <= 0) {
+
+            this.hurtTimer = 0;
+            this.kill(ev);
+        }
+        else {
+
+            this.hurtTimer = HURT_TIME + (this.hurtTimer % 2);
+        }
+
+        nextObject<FlyingText>(flyingText, FlyingText).spawn(dmg, 
+            this.pos.x, this.pos.y + this.center.y - this.spr.height/2, 
+            MESSAGE_SPEED)
+    }
+
+
+    public playerCollision(pl : Player, flyingText : Array<FlyingText>, ev : GameEvent) : boolean {
 
         const PLAYER_KNOCKBACK = 2.0;
+        const SELF_KNOCKBACK = 2.0;
 
         if (this.isDeactivated()) return false;
 
         this.playerEvent(pl, ev);
 
+        let dir = Math.sign(pl.getPos().x - this.pos.x);
+
         let swordHitbox = pl.getSwordHitbox();
-        if (pl.canHurt() && boxOverlay(this.pos, this.center, this.collisionBox,
+        if (pl.getSwordHitId() > this.lastHitId && 
+            pl.canHurt() && boxOverlay(this.pos, this.center, this.collisionBox,
             swordHitbox.x - swordHitbox.w/2, swordHitbox.y - swordHitbox.h/2,
             swordHitbox.w, swordHitbox.h)) {
+            
+            this.hurt(pl.getAttackDamage(), flyingText, ev);
+            this.lastHitId = pl.getSwordHitId();
 
-            this.kill(ev);
+            this.speed.x = -SELF_KNOCKBACK * dir * this.mass;
+
+            pl.downAttackBoost();
+
             return true;
         }
 
-        let dir = Math.sign(pl.getPos().x - this.pos.x);
         pl.hurtCollision(
             this.pos.x + this.center.x - this.hitbox.x/2, 
             this.pos.y + this.center.y - this.hitbox.y/2,
@@ -147,6 +199,7 @@ export abstract class Enemy extends CollisionObject {
 
         this.dying = true;
         this.spr.setFrame(0, 0,);
+        this.hurtTimer = 0;
     }
 
 }

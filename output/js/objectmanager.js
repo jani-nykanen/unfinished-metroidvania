@@ -7,6 +7,7 @@ export class ObjectManager {
         this.projectiles = new ObjectPool(Projectile);
         this.player = new Player(80, 144 - 40, this.projectiles, state);
         this.enemies = new Array();
+        this.flyingMessages = new Array();
     }
     update(stage, camera, ev) {
         this.player.update(ev);
@@ -15,10 +16,13 @@ export class ObjectManager {
         for (let e of this.enemies) {
             e.cameraCheck(camera);
             e.update(ev);
-            e.playerCollision(this.player, ev);
+            e.playerCollision(this.player, this.flyingMessages, ev);
             stage.objectCollisions(e, ev);
         }
         camera.followObject(this.player, ev);
+        for (let m of this.flyingMessages) {
+            m.update(ev);
+        }
     }
     draw(c) {
         this.player.preDraw(c);
@@ -27,6 +31,9 @@ export class ObjectManager {
         }
         this.projectiles.draw(c);
         this.player.draw(c);
+        for (let m of this.flyingMessages) {
+            m.draw(c);
+        }
     }
     setPlayerLocation(x, y) {
         this.player.setPosition(x * 16 + 8, y * 16 + 8);

@@ -39,4 +39,17 @@ export class GameState {
 
         this.bullets = clamp(this.bullets + count, 0, this.maxBullets);
     }
+
+
+    public computeBaseSwordDamage() : number {
+
+        // Obviously temporary
+        return 2;
+    }
+
+
+    public computeBaseProjectileDamage() : number {
+
+        return 1;
+    }
 }

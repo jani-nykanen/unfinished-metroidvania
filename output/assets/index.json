@@ -13,6 +13,7 @@
         {"name": "dust",  "path": "dust.png"},
         {"name": "particles",  "path": "particles.png"},
         {"name": "enemies",  "path": "enemies.png"},
+        {"name": "fontSmall",  "path": "font_small.png"},
         {"name": "font",  "path": "font.png"}
     ],
 

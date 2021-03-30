@@ -15,4 +15,8 @@ export class GameState {
     addAmmo(count) {
         this.bullets = clamp(this.bullets + count, 0, this.maxBullets);
     }
+    computeBaseSwordDamage() {
+        // Obviously temporary
+        return 2;
+    }
 }

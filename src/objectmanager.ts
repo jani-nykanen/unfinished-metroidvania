@@ -3,6 +3,7 @@ import { Canvas } from "./core/canvas.js";
 import { GameEvent } from "./core/core.js";
 import { Enemy } from "./enemy.js";
 import { getEnemyType } from "./enemytypes.js";
+import { FlyingText } from "./flyingtext.js";
 import { ObjectPool } from "./objectpool.js";
 import { Player } from "./player.js";
 import { Projectile } from "./projectile.js";
@@ -16,6 +17,7 @@ export class ObjectManager {
     private player : Player;
     private projectiles : ObjectPool<Projectile>;
     private enemies : Array<Enemy>;
+    private flyingMessages : Array<FlyingText>;
 
 
     constructor(state : GameState) {
@@ -23,6 +25,7 @@ export class ObjectManager {
         this.projectiles = new ObjectPool<Projectile> (Projectile);
         this.player = new Player(80, 144 - 40, this.projectiles, state);
         this.enemies = new Array<Enemy>();
+        this.flyingMessages = new Array<FlyingText> ();
     }
 
 
@@ -37,11 +40,16 @@ export class ObjectManager {
 
             e.cameraCheck(camera);
             e.update(ev);
-            e.playerCollision(this.player, ev);
+            e.playerCollision(this.player, this.flyingMessages, ev);
             stage.objectCollisions(e, ev);
         }
 
         camera.followObject(this.player, ev);
+
+        for (let m of this.flyingMessages) {
+
+            m.update(ev);
+        }
     }
 
 
@@ -56,6 +64,11 @@ export class ObjectManager {
 
         this.projectiles.draw(c);
         this.player.draw(c);
+
+        for (let m of this.flyingMessages) {
+
+            m.draw(c);
+        }
     }
 
 

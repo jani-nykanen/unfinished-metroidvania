@@ -1,9 +1,8 @@
 import { Camera } from "./camera.js";
 import { Canvas } from "./core/canvas.js";
 import { GameEvent } from "./core/core.js";
-import { CollisionObject, nextObject } from "./gameobject.js";
+import { CollisionObject, ExistingObject, nextObject } from "./gameobject.js";
 import { Stage } from "./stage.js";
-
 
 
 export class ObjectPool<T extends CollisionObject> {

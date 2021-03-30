@@ -22,6 +22,7 @@ export class Player extends CollisionObject {
     private jumpTimer : number;
     private jumpMargin : number;
     private canJump : boolean;
+    private downAttackJumpMargin : number;
 
     private boostJump : boolean;
     private dust : Array<Dust>;
@@ -37,6 +38,7 @@ export class Player extends CollisionObject {
     private chargeAttack : boolean;
     private chargeAttackTimer : number;
     private swordHitbox : Rect;
+    private swordHitId : number;
 
     private sprWeapon : Sprite;
     private sprWeaponEffect : Sprite;
@@ -77,6 +79,7 @@ export class Player extends CollisionObject {
         this.canJump = false;
         this.jumpTimer = 0;
         this.jumpMargin = 0;
+        this.downAttackJumpMargin = 0;
 
         this.boostJump = false;
         this.dust = new Array<Dust> ();
@@ -92,6 +95,7 @@ export class Player extends CollisionObject {
         this.chargeAttack = false;
         this.chargeAttackTimer = 0;
         this.swordHitbox = new Rect();
+        this.swordHitId = 0;
 
         this.sprWeapon = new Sprite(16, 16);
         this.sprWeaponEffect = new Sprite(32, 32);
@@ -121,20 +125,20 @@ export class Player extends CollisionObject {
 
     private jump(ev : GameEvent) {
 
-        const EPS = 0.1;
         const JUMP_TIME = 15;
         const BOOST_TIME = 60;
+        const DOWN_ATTACK_JUMP_BONUS = 8;
 
         let jumpButtonState = ev.getAction("fire1");
 
-        if (Math.abs(this.target.x) > EPS) {
+        if (this.downAttackJumpMargin > 0 && 
+            (jumpButtonState & State.DownOrPressed) == 1) {
 
-            this.flip = this.target.x > 0 ? Flip.None : Flip.Horizontal;
-            this.dir = Math.sign(this.target.x);
+            this.jumpTimer = this.downAttackJumpMargin + DOWN_ATTACK_JUMP_BONUS;
+            this.downAttackJumpMargin = 0;
+            this.jumpMargin = 0;
         }
-
-        // Jump
-        if ( (this.jumpMargin > 0 || !this.boostJump) && 
+        else if ( (this.jumpMargin > 0 || !this.boostJump) && 
             jumpButtonState == State.Pressed) {
 
             if (this.jumpMargin <= 0) {
@@ -182,6 +186,8 @@ export class Player extends CollisionObject {
                 this.sprWeaponEffect.setFrame(0, 0);
 
                 this.stopMovement();
+
+                ++ this.swordHitId;
             }
             return;
         }
@@ -190,6 +196,8 @@ export class Player extends CollisionObject {
         if ((this.canAttack || (!this.canJump && down)) &&
             attackButton == State.Pressed) {
             
+            ++ this.swordHitId;
+
             this.stopMovement();
             this.jumpTimer = 0;
         
@@ -329,6 +337,7 @@ export class Player extends CollisionObject {
     
     private control(ev : GameEvent) {
 
+        const EPS = 0.1;
         const BASE_GRAVITY = 4.0;
         const BASE_SPEED = 1.0;
 
@@ -357,6 +366,12 @@ export class Player extends CollisionObject {
 
             this.target.x = ev.getStick().x * BASE_SPEED;
             this.target.y = BASE_GRAVITY;
+
+            if (Math.abs(this.target.x) > EPS) {
+
+                this.flip = this.target.x > 0 ? Flip.None : Flip.Horizontal;
+                this.dir = Math.sign(this.target.x);
+            }
 
             this.jump(ev);
         }
@@ -563,9 +578,12 @@ export class Player extends CollisionObject {
             this.jumpMargin -= ev.step;
         }
         
-        if (this.jumpTimer > 0 ) {
+        if (this.jumpTimer > 0 || this.downAttackJumpMargin > 0) {
 
-            this.jumpTimer -= ev.step;
+            if (this.jumpTimer > 0)
+                this.jumpTimer -= ev.step;
+            if (this.downAttackJumpMargin > 0)
+                this.downAttackJumpMargin -= ev.step;
 
             if (this.boostJump) {
 
@@ -806,11 +824,17 @@ export class Player extends CollisionObject {
         const HURT_TIME = 60;
 
         if (this.dying || this.hurtTimer > 0) return;
-
+        
         this.hurtTimer = HURT_TIME;
+
+        // TODO: 'resetFlags' method, maybe?
         this.jumpTimer = 0;
         this.climbing = false;
         this.downAttacking = false;
+        this.attacking = false;
+        this.shooting = false;
+        this.chargeAttack = false;
+        this.charging = false;
     }
 
 
@@ -866,6 +890,19 @@ export class Player extends CollisionObject {
     }
 
 
+    public downAttackBoost() {
+
+        const DOWN_ATTACK_JUMP_TIME = 7;
+
+        if (!this.downAttacking || this.downAttackWait > 0) return;
+
+        this.downAttackJumpMargin = DOWN_ATTACK_JUMP_TIME;
+        this.jumpMargin = 0;
+        this.boostJump = false;
+        this.downAttacking = false;
+    }
+
+
     public getSwordHitbox() : Rect {
 
         return this.swordHitbox.clone();
@@ -900,4 +937,24 @@ export class Player extends CollisionObject {
 
         return false;
     }
+
+
+    public getAttackDamage() : number {
+
+        let dmg = this.state.computeBaseSwordDamage();
+
+        if (this.chargeAttack) {
+
+            dmg += 2;
+        }
+        else if (this.downAttacking) {
+
+            ++ dmg;
+        }
+
+        return dmg;
+    }
+
+
+    public getSwordHitId = () : number => this.swordHitId;
 }

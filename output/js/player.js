@@ -13,6 +13,7 @@ var ChargeType;
 export class Player extends CollisionObject {
     constructor(x, y, projectiles, state) {
         super(x, y);
+        this.getSwordHitId = () => this.swordHitId;
         this.friction = new Vector2(0.1, 0.1);
         this.hitbox = new Vector2(8, 12);
         this.collisionBox = new Vector2(8, 12);
@@ -22,6 +23,7 @@ export class Player extends CollisionObject {
         this.canJump = false;
         this.jumpTimer = 0;
         this.jumpMargin = 0;
+        this.downAttackJumpMargin = 0;
         this.boostJump = false;
         this.dust = new Array();
         this.dustTimer = 0;
@@ -34,6 +36,7 @@ export class Player extends CollisionObject {
         this.chargeAttack = false;
         this.chargeAttackTimer = 0;
         this.swordHitbox = new Rect();
+        this.swordHitId = 0;
         this.sprWeapon = new Sprite(16, 16);
         this.sprWeaponEffect = new Sprite(32, 32);
         this.spr = new Sprite(16, 16);
@@ -51,16 +54,17 @@ export class Player extends CollisionObject {
         return true;
     }
     jump(ev) {
-        const EPS = 0.1;
         const JUMP_TIME = 15;
         const BOOST_TIME = 60;
+        const DOWN_ATTACK_JUMP_BONUS = 8;
         let jumpButtonState = ev.getAction("fire1");
-        if (Math.abs(this.target.x) > EPS) {
-            this.flip = this.target.x > 0 ? Flip.None : Flip.Horizontal;
-            this.dir = Math.sign(this.target.x);
+        if (this.downAttackJumpMargin > 0 &&
+            (jumpButtonState & State.DownOrPressed) == 1) {
+            this.jumpTimer = this.downAttackJumpMargin + DOWN_ATTACK_JUMP_BONUS;
+            this.downAttackJumpMargin = 0;
+            this.jumpMargin = 0;
         }
-        // Jump
-        if ((this.jumpMargin > 0 || !this.boostJump) &&
+        else if ((this.jumpMargin > 0 || !this.boostJump) &&
             jumpButtonState == State.Pressed) {
             if (this.jumpMargin <= 0) {
                 this.jumpTimer = BOOST_TIME;
@@ -94,12 +98,14 @@ export class Player extends CollisionObject {
                 this.chargeAttackTimer = CHARGE_ATTACK_TIME;
                 this.sprWeaponEffect.setFrame(0, 0);
                 this.stopMovement();
+                ++this.swordHitId;
             }
             return;
         }
         // Attack
         if ((this.canAttack || (!this.canJump && down)) &&
             attackButton == State.Pressed) {
+            ++this.swordHitId;
             this.stopMovement();
             this.jumpTimer = 0;
             if (!this.climbing && !this.canJump && down) {
@@ -189,6 +195,7 @@ export class Player extends CollisionObject {
         }
     }
     control(ev) {
+        const EPS = 0.1;
         const BASE_GRAVITY = 4.0;
         const BASE_SPEED = 1.0;
         if (this.knockbackTimer > 0) {
@@ -210,6 +217,10 @@ export class Player extends CollisionObject {
         else {
             this.target.x = ev.getStick().x * BASE_SPEED;
             this.target.y = BASE_GRAVITY;
+            if (Math.abs(this.target.x) > EPS) {
+                this.flip = this.target.x > 0 ? Flip.None : Flip.Horizontal;
+                this.dir = Math.sign(this.target.x);
+            }
             this.jump(ev);
         }
         this.shoot(ev);
@@ -345,8 +356,11 @@ export class Player extends CollisionObject {
         if (this.jumpMargin > 0) {
             this.jumpMargin -= ev.step;
         }
-        if (this.jumpTimer > 0) {
-            this.jumpTimer -= ev.step;
+        if (this.jumpTimer > 0 || this.downAttackJumpMargin > 0) {
+            if (this.jumpTimer > 0)
+                this.jumpTimer -= ev.step;
+            if (this.downAttackJumpMargin > 0)
+                this.downAttackJumpMargin -= ev.step;
             if (this.boostJump) {
                 this.speed.y = Math.max(BOOST_CAP, this.speed.y - BOOST_SPEED * ev.step);
             }
@@ -499,6 +513,10 @@ export class Player extends CollisionObject {
         this.jumpTimer = 0;
         this.climbing = false;
         this.downAttacking = false;
+        this.attacking = false;
+        this.shooting = false;
+        this.chargeAttack = false;
+        this.charging = false;
     }
     verticalCollisionEvent(dir, ev) {
         const JUMP_MARGIN = 12;
@@ -532,6 +550,15 @@ export class Player extends CollisionObject {
         return (this.attacking && ((!this.chargeAttack && this.spr.getColumn() < 2) || this.chargeAttack)) ||
             (this.downAttacking && this.downAttackWait <= 0);
     }
+    downAttackBoost() {
+        const DOWN_ATTACK_JUMP_TIME = 7;
+        if (!this.downAttacking || this.downAttackWait > 0)
+            return;
+        this.downAttackJumpMargin = DOWN_ATTACK_JUMP_TIME;
+        this.jumpMargin = 0;
+        this.boostJump = false;
+        this.downAttacking = false;
+    }
     getSwordHitbox() {
         return this.swordHitbox.clone();
     }
@@ -550,5 +577,15 @@ export class Player extends CollisionObject {
             return true;
         }
         return false;
+    }
+    getAttackDamage() {
+        let dmg = this.state.computeBaseSwordDamage();
+        if (this.chargeAttack) {
+            dmg += 2;
+        }
+        else if (this.downAttacking) {
+            ++dmg;
+        }
+        return dmg;
     }
 }

@@ -19,7 +19,7 @@ export class Slime extends Enemy {
 
     constructor(x : number, y : number) {
 
-        super(x, y, 0);
+        super(x, y, 0, 3);
 
         const BASE_GRAVITY = 2.0;
 
@@ -28,6 +28,7 @@ export class Slime extends Enemy {
         this.friction.x = 0.05;
 
         this.center.y = 3;
+        this.mass = 0.75;
 
         this.target.y = BASE_GRAVITY;
 
