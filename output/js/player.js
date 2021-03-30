@@ -41,6 +41,7 @@ export class Player extends CollisionObject {
         this.sprWeaponEffect = new Sprite(32, 32);
         this.spr = new Sprite(16, 16);
         this.shooting = false;
+        this.bulletId = 0;
         this.hurtTimer = 0;
         this.knockbackTimer = 0;
         this.flip = Flip.None;
@@ -130,13 +131,18 @@ export class Player extends CollisionObject {
     shootBullet(id, reduceAmmo, ev) {
         const BULLET_SPEED = 4;
         const FORWARD_OFF = 6;
+        let dmg = this.state.computeBaseProjectileDamage();
+        if (this.charging) {
+            dmg += 2;
+        }
         this.charging = false;
         this.shooting = true;
         if (this.climbing && this.dir < 0) {
             this.spr.setFrame(this.spr.getColumn() == 3 ? 4 : 3, this.spr.getRow());
         }
         this.sprWeapon.setFrame(0, 1);
-        this.projectiles.nextObject().spawn(this.pos.x + FORWARD_OFF * this.dir, this.pos.y, this.dir * BULLET_SPEED, 0, id).setInitialOldPos(this.pos.clone());
+        this.projectiles.nextObject().spawn(this.pos.x + FORWARD_OFF * this.dir, this.pos.y, this.dir * BULLET_SPEED, 0, id, dmg, true, ++this.bulletId)
+            .setInitialOldPos(this.pos.clone());
         this.state.addAmmo(-reduceAmmo);
     }
     shoot(ev) {
@@ -145,8 +151,8 @@ export class Player extends CollisionObject {
         // Charge attack
         if (this.charging && this.chargeType == ChargeType.Gun) {
             if ((attackButton & State.DownOrPressed) == 0) {
-                this.charging = false;
                 this.shootBullet(1, 2, ev);
+                this.charging = false;
             }
             return;
         }
@@ -510,6 +516,7 @@ export class Player extends CollisionObject {
         if (this.dying || this.hurtTimer > 0)
             return;
         this.hurtTimer = HURT_TIME;
+        // TODO: 'resetFlags' method, maybe?
         this.jumpTimer = 0;
         this.climbing = false;
         this.downAttacking = false;
@@ -563,7 +570,8 @@ export class Player extends CollisionObject {
         return this.swordHitbox.clone();
     }
     breakCollision(x, y, w, h, ev) {
-        return this.canHurt && boxOverlayRect(this.swordHitbox, x, y, w, h);
+        return this.canHurt &&
+            boxOverlayRect(this.swordHitbox, x, y, w, h);
     }
     hurtCollision(x, y, w, h, dmg, knockback, ev) {
         const KNOCKBACK_TIME = 30;
@@ -573,6 +581,8 @@ export class Player extends CollisionObject {
             this.hurt(ev);
             this.knockbackTimer = KNOCKBACK_TIME;
             this.speed.x = knockback;
+            this.flip = knockback < 0 ? Flip.None : Flip.Horizontal;
+            this.dir = -Math.sign(knockback);
             // TODO: Reduce damage
             return true;
         }

@@ -19,4 +19,9 @@ export class ObjectPool {
     nextObject() {
         return nextObject(this.objects, this.type);
     }
+    event(cb) {
+        for (let o of this.objects) {
+            cb(o);
+        }
+    }
 }

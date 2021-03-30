@@ -25,6 +25,7 @@ export abstract class Enemy extends CollisionObject {
 
     private hurtTimer : number;
     private lastHitId : number;
+    private lastExplosionId : number;
 
     
     constructor(x : number, y : number, id = 0, health = 1) {
@@ -55,6 +56,7 @@ export abstract class Enemy extends CollisionObject {
         this.mass = 1;
     
         this.lastHitId = -1;
+        this.lastExplosionId = -1;
     }
 
     
@@ -95,8 +97,8 @@ export abstract class Enemy extends CollisionObject {
 
         let bmp = c.getBitmap("enemies");
 
-        let px = Math.round(this.pos.x) + this.renderOffset.x - this.spr.width/2;
-        let py = Math.round(this.pos.y) + this.renderOffset.y - this.spr.height/2;
+        let px = Math.floor(this.pos.x) + this.renderOffset.x - this.spr.width/2;
+        let py = Math.floor(this.pos.y) + this.renderOffset.y - this.spr.height/2;
 
         c.drawSprite(this.spr, bmp, px, py, this.flip);
     }
@@ -135,7 +137,7 @@ export abstract class Enemy extends CollisionObject {
 
         this.playerEvent(pl, ev);
 
-        let dir = Math.sign(pl.getPos().x - this.pos.x);
+        let dir = pl.getPos().x - this.pos.x > 0 ? 1 : -1;
 
         let swordHitbox = pl.getSwordHitbox();
         if (pl.getSwordHitId() > this.lastHitId && 
@@ -163,7 +165,40 @@ export abstract class Enemy extends CollisionObject {
     }
 
 
-    public projectileCollision(p : Projectile, ev : GameEvent) : boolean {
+    public projectileCollision(p : Projectile, flyingText : Array<FlyingText>, ev : GameEvent) : boolean {
+
+        if (!p.isFriendly() || (p.isDying() && !p.isExplosive()) 
+            || !p.doesExist() || !p.isInCamera()) 
+            return false;
+
+        let hitbox = p.getHitbox();
+        let pos = p.getPos();
+
+        if (!p.isDying() && boxOverlay(this.pos, this.center, this.hitbox,
+            pos.x - hitbox.x/2, pos.y - hitbox.y/2,
+            hitbox.x, hitbox.y)) {
+
+            p.kill(ev);
+            this.hurt(p.getDamage(), flyingText, ev);
+
+            // Needed if kills the bullet and causes the explosion
+            if (p.getExplosionId() >= 0)
+                this.lastExplosionId = p.getExplosionId();
+
+            return true;
+        }
+        else if (p.isDying() && p.isExplosive() &&  
+            this.lastExplosionId < p.getExplosionId() &&
+            p.checkExplosion(
+                this.pos.x + this.center.x - this.hitbox.x/2,
+                this.pos.y + this.center.y - this.hitbox.y/2,
+                this.hitbox.x, this.hitbox.y)) {
+
+            this.lastExplosionId = p.getExplosionId();
+            this.hurt(p.getDamage(), flyingText, ev);
+
+            return true;
+        }
 
         return false;
     }

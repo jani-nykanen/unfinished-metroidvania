@@ -43,4 +43,13 @@ export class ObjectPool<T extends CollisionObject> {
 
         return nextObject<T>(this.objects, this.type);
     }
+
+
+    public event(cb : ((o : T) => void)) {
+
+        for (let o of this.objects) {
+
+            cb(o);
+        }
+    }
 }

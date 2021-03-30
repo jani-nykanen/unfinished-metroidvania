@@ -19,4 +19,7 @@ export class GameState {
         // Obviously temporary
         return 2;
     }
+    computeBaseProjectileDamage() {
+        return 1;
+    }
 }

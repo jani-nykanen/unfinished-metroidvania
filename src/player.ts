@@ -44,6 +44,7 @@ export class Player extends CollisionObject {
     private sprWeaponEffect : Sprite;
 
     private shooting : boolean;
+    private bulletId : number;
 
     private downAttacking : boolean;
     private downAttackWait : number;
@@ -102,6 +103,7 @@ export class Player extends CollisionObject {
         this.spr = new Sprite(16, 16);
 
         this.shooting = false;
+        this.bulletId = 0;
 
         this.hurtTimer = 0;
         this.knockbackTimer = 0;
@@ -235,6 +237,12 @@ export class Player extends CollisionObject {
         const BULLET_SPEED = 4;
         const FORWARD_OFF = 6;
 
+        let dmg = this.state.computeBaseProjectileDamage();
+        if (this.charging) {
+            
+            dmg += 2;
+        }
+
         this.charging = false;
         this.shooting = true;
 
@@ -248,7 +256,9 @@ export class Player extends CollisionObject {
         this.projectiles.nextObject().spawn(
             this.pos.x + FORWARD_OFF * this.dir, 
             this.pos.y, 
-            this.dir * BULLET_SPEED, 0, id).setInitialOldPos(this.pos.clone());
+            this.dir * BULLET_SPEED, 0, id, dmg, true,
+            ++ this.bulletId)
+            .setInitialOldPos(this.pos.clone());
         
         this.state.addAmmo(-reduceAmmo);
     }
@@ -264,8 +274,8 @@ export class Player extends CollisionObject {
 
             if ((attackButton & State.DownOrPressed) == 0) {
 
-                this.charging = false;
                 this.shootBullet(1, 2, ev);
+                this.charging = false;
             }
             return;
         }
@@ -911,7 +921,8 @@ export class Player extends CollisionObject {
 
     public breakCollision(x : number, y : number, w : number, h : number, ev : GameEvent) : boolean {
 
-        return this.canHurt && boxOverlayRect(this.swordHitbox, x, y, w, h);
+        return this.canHurt && 
+            boxOverlayRect(this.swordHitbox, x, y, w, h);
     }
 
 
@@ -929,6 +940,8 @@ export class Player extends CollisionObject {
             
             this.knockbackTimer = KNOCKBACK_TIME;
             this.speed.x = knockback;
+            this.flip = knockback < 0 ? Flip.None : Flip.Horizontal;
+            this.dir = -Math.sign(knockback);
 
             // TODO: Reduce damage
 

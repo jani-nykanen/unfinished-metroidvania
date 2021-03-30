@@ -18,6 +18,11 @@ export class ObjectManager {
             e.update(ev);
             e.playerCollision(this.player, this.flyingMessages, ev);
             stage.objectCollisions(e, ev);
+            if (!e.isDeactivated()) {
+                this.projectiles.event(p => {
+                    e.projectileCollision(p, this.flyingMessages, ev);
+                });
+            }
         }
         camera.followObject(this.player, ev);
         for (let m of this.flyingMessages) {

@@ -23,6 +23,7 @@ export class Enemy extends CollisionObject {
         this.hurtTimer = 0;
         this.mass = 1;
         this.lastHitId = -1;
+        this.lastExplosionId = -1;
     }
     updateAI(ev) { }
     die(ev) {
@@ -42,8 +43,8 @@ export class Enemy extends CollisionObject {
         if (this.hurtTimer > 0 && Math.floor(this.hurtTimer / 4) % 2 == 1)
             return;
         let bmp = c.getBitmap("enemies");
-        let px = Math.round(this.pos.x) + this.renderOffset.x - this.spr.width / 2;
-        let py = Math.round(this.pos.y) + this.renderOffset.y - this.spr.height / 2;
+        let px = Math.floor(this.pos.x) + this.renderOffset.x - this.spr.width / 2;
+        let py = Math.floor(this.pos.y) + this.renderOffset.y - this.spr.height / 2;
         c.drawSprite(this.spr, bmp, px, py, this.flip);
     }
     playerEvent(pl, ev) { }
@@ -65,7 +66,7 @@ export class Enemy extends CollisionObject {
         if (this.isDeactivated())
             return false;
         this.playerEvent(pl, ev);
-        let dir = Math.sign(pl.getPos().x - this.pos.x);
+        let dir = pl.getPos().x - this.pos.x > 0 ? 1 : -1;
         let swordHitbox = pl.getSwordHitbox();
         if (pl.getSwordHitId() > this.lastHitId &&
             pl.canHurt() && boxOverlay(this.pos, this.center, this.collisionBox, swordHitbox.x - swordHitbox.w / 2, swordHitbox.y - swordHitbox.h / 2, swordHitbox.w, swordHitbox.h)) {
@@ -78,7 +79,27 @@ export class Enemy extends CollisionObject {
         pl.hurtCollision(this.pos.x + this.center.x - this.hitbox.x / 2, this.pos.y + this.center.y - this.hitbox.y / 2, this.hitbox.x, this.hitbox.y, 1, PLAYER_KNOCKBACK * dir, ev);
         return false;
     }
-    projectileCollision(p, ev) {
+    projectileCollision(p, flyingText, ev) {
+        if (!p.isFriendly() || (p.isDying() && !p.isExplosive())
+            || !p.doesExist() || !p.isInCamera())
+            return false;
+        let hitbox = p.getHitbox();
+        let pos = p.getPos();
+        if (!p.isDying() && boxOverlay(this.pos, this.center, this.hitbox, pos.x - hitbox.x / 2, pos.y - hitbox.y / 2, hitbox.x, hitbox.y)) {
+            p.kill(ev);
+            this.hurt(p.getDamage(), flyingText, ev);
+            // Needed if kills the bullet and causes the explosion
+            if (p.getExplosionId() >= 0)
+                this.lastExplosionId = p.getExplosionId();
+            return true;
+        }
+        else if (p.isDying() && p.isExplosive() &&
+            this.lastExplosionId < p.getExplosionId() &&
+            p.checkExplosion(this.pos.x + this.center.x - this.hitbox.x / 2, this.pos.y + this.center.y - this.hitbox.y / 2, this.hitbox.x, this.hitbox.y)) {
+            this.lastExplosionId = p.getExplosionId();
+            this.hurt(p.getDamage(), flyingText, ev);
+            return true;
+        }
         return false;
     }
     enemyCollisionEvent(dirx, diry, ev) { }
