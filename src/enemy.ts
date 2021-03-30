@@ -85,6 +85,8 @@ export abstract class Enemy extends CollisionObject {
 
     public playerCollision(pl : Player, ev : GameEvent) : boolean {
 
+        const PLAYER_KNOCKBACK = 2.0;
+
         if (this.isDeactivated()) return false;
 
         this.playerEvent(pl, ev);
@@ -97,6 +99,13 @@ export abstract class Enemy extends CollisionObject {
             this.kill(ev);
             return true;
         }
+
+        let dir = Math.sign(pl.getPos().x - this.pos.x);
+        pl.hurtCollision(
+            this.pos.x + this.center.x - this.hitbox.x/2, 
+            this.pos.y + this.center.y - this.hitbox.y/2,
+            this.hitbox.x, this.hitbox.y, 1, PLAYER_KNOCKBACK * dir,
+            ev);
 
         return false;
     }

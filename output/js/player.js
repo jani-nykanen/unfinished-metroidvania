@@ -14,10 +14,10 @@ export class Player extends CollisionObject {
     constructor(x, y, projectiles, state) {
         super(x, y);
         this.friction = new Vector2(0.1, 0.1);
-        this.hitbox = new Vector2(12, 16);
+        this.hitbox = new Vector2(8, 12);
         this.collisionBox = new Vector2(8, 12);
-        this.center = new Vector2();
-        this.renderOffset = new Vector2(0, -2);
+        this.center = new Vector2(0, 2);
+        this.renderOffset = new Vector2();
         this.inCamera = true;
         this.canJump = false;
         this.jumpTimer = 0;
@@ -39,6 +39,7 @@ export class Player extends CollisionObject {
         this.spr = new Sprite(16, 16);
         this.shooting = false;
         this.hurtTimer = 0;
+        this.knockbackTimer = 0;
         this.flip = Flip.None;
         this.dir = 1;
         this.downAttacking = false;
@@ -190,6 +191,11 @@ export class Player extends CollisionObject {
     control(ev) {
         const BASE_GRAVITY = 4.0;
         const BASE_SPEED = 1.0;
+        if (this.knockbackTimer > 0) {
+            this.target.x = 0;
+            this.target.y = BASE_GRAVITY;
+            return;
+        }
         if (this.chargeAttack)
             return;
         this.friction.y = 0.1;
@@ -288,8 +294,11 @@ export class Player extends CollisionObject {
         const BASE_SPEED = 12;
         const CLIMB_SPEED = 10;
         const SPEED_MOD = 6;
-        let frame;
         let speed;
+        if (this.knockbackTimer > 0) {
+            this.spr.setFrame(4, 2);
+            return;
+        }
         // TODO: Split to multiple methods
         if (this.shooting) {
             this.animateShooting(ev);
@@ -327,7 +336,10 @@ export class Player extends CollisionObject {
         const BOOST_CAP = -1.5;
         const CHARGE_TIME_MAX = 8;
         const CHARGE_SPEED = 1.5;
-        if (this.hurtTimer > 0) {
+        if (this.knockbackTimer > 0) {
+            this.knockbackTimer -= ev.step;
+        }
+        else if (this.hurtTimer > 0) {
             this.hurtTimer -= ev.step;
         }
         if (this.jumpMargin > 0) {
@@ -377,13 +389,13 @@ export class Player extends CollisionObject {
     }
     computeSwordHitbox() {
         const X_OFFSET = 14;
-        const Y_OFFSET = -2;
+        const Y_OFFSET = 0;
         const WIDTH = 12;
         const HEIGHT = 16;
         const CHARGE_WIDTH = 16;
         const CHARGE_HEIGHT = 20;
         const DOWN_ATTACK_XOFF = 3;
-        const DOWN_ATTACK_YOFF = 8;
+        const DOWN_ATTACK_YOFF = 10;
         const DOWN_ATTACK_WIDTH = 8;
         const DOWN_ATTACK_HEIGHT = 12;
         if (this.attacking) {
@@ -441,6 +453,10 @@ export class Player extends CollisionObject {
         }
     }
     draw(c) {
+        if (this.knockbackTimer <= 0 && this.hurtTimer > 0 &&
+            Math.floor(this.hurtTimer / 4) % 2 == 1) {
+            return;
+        }
         let bmpName = (this.charging &&
             Math.floor(this.chargeTimer / 4) % 2 == 0) ?
             "playerWhite" : "player";
@@ -480,6 +496,9 @@ export class Player extends CollisionObject {
         if (this.dying || this.hurtTimer > 0)
             return;
         this.hurtTimer = HURT_TIME;
+        this.jumpTimer = 0;
+        this.climbing = false;
+        this.downAttacking = false;
     }
     verticalCollisionEvent(dir, ev) {
         const JUMP_MARGIN = 12;
@@ -518,5 +537,18 @@ export class Player extends CollisionObject {
     }
     breakCollision(x, y, w, h, ev) {
         return this.canHurt && boxOverlayRect(this.swordHitbox, x, y, w, h);
+    }
+    hurtCollision(x, y, w, h, dmg, knockback, ev) {
+        const KNOCKBACK_TIME = 30;
+        if (this.dying || this.hurtTimer > 0)
+            return;
+        if (boxOverlay(this.pos, this.center, this.hitbox, x, y, w, h)) {
+            this.hurt(ev);
+            this.knockbackTimer = KNOCKBACK_TIME;
+            this.speed.x = knockback;
+            // TODO: Reduce damage
+            return true;
+        }
+        return false;
     }
 }

@@ -51,6 +51,7 @@ export class Player extends CollisionObject {
     private chargeTimer : number;
 
     private hurtTimer : number;
+    private knockbackTimer : number;
 
     private flip : Flip;
     private dir : number;
@@ -66,10 +67,10 @@ export class Player extends CollisionObject {
         super(x, y);
 
         this.friction = new Vector2(0.1, 0.1);
-        this.hitbox = new Vector2(12, 16);
+        this.hitbox = new Vector2(8, 12);
         this.collisionBox = new Vector2(8, 12);
-        this.center = new Vector2();
-        this.renderOffset = new Vector2(0, -2);
+        this.center = new Vector2(0, 2);
+        this.renderOffset = new Vector2();
 
         this.inCamera = true;
 
@@ -99,6 +100,7 @@ export class Player extends CollisionObject {
         this.shooting = false;
 
         this.hurtTimer = 0;
+        this.knockbackTimer = 0;
       
         this.flip = Flip.None;
         this.dir = 1;
@@ -330,6 +332,13 @@ export class Player extends CollisionObject {
         const BASE_GRAVITY = 4.0;
         const BASE_SPEED = 1.0;
 
+        if (this.knockbackTimer > 0) {
+
+            this.target.x = 0;
+            this.target.y = BASE_GRAVITY;
+            return;
+        }
+
         if (this.chargeAttack) return;
 
         this.friction.y = 0.1;
@@ -480,8 +489,13 @@ export class Player extends CollisionObject {
         const CLIMB_SPEED = 10;
         const SPEED_MOD = 6;
 
-        let frame : number;
         let speed : number;
+
+        if (this.knockbackTimer > 0) {
+
+            this.spr.setFrame(4, 2);
+            return;
+        }
 
         // TODO: Split to multiple methods
 
@@ -535,7 +549,11 @@ export class Player extends CollisionObject {
         const CHARGE_TIME_MAX = 8;
         const CHARGE_SPEED = 1.5;
 
-        if (this.hurtTimer > 0) {
+        if (this.knockbackTimer > 0) {
+
+            this.knockbackTimer -= ev.step;
+        }
+        else if (this.hurtTimer > 0) {
 
             this.hurtTimer -= ev.step;
         }
@@ -615,13 +633,13 @@ export class Player extends CollisionObject {
     private computeSwordHitbox() {
 
         const X_OFFSET = 14;
-        const Y_OFFSET = -2;
+        const Y_OFFSET = 0;
         const WIDTH = 12;
         const HEIGHT = 16;
         const CHARGE_WIDTH = 16;
         const CHARGE_HEIGHT = 20;
         const DOWN_ATTACK_XOFF = 3;
-        const DOWN_ATTACK_YOFF = 8;
+        const DOWN_ATTACK_YOFF = 10;
         const DOWN_ATTACK_WIDTH = 8;
         const DOWN_ATTACK_HEIGHT = 12;
 
@@ -723,6 +741,12 @@ export class Player extends CollisionObject {
 
     public draw(c : Canvas) {
 
+        if (this.knockbackTimer <= 0 && this.hurtTimer > 0 &&
+            Math.floor(this.hurtTimer / 4) % 2 == 1) {
+
+            return;
+        }
+
         let bmpName = (this.charging && 
             Math.floor(this.chargeTimer/4) % 2 == 0) ?
             "playerWhite" : "player";
@@ -784,6 +808,9 @@ export class Player extends CollisionObject {
         if (this.dying || this.hurtTimer > 0) return;
 
         this.hurtTimer = HURT_TIME;
+        this.jumpTimer = 0;
+        this.climbing = false;
+        this.downAttacking = false;
     }
 
 
@@ -850,4 +877,27 @@ export class Player extends CollisionObject {
         return this.canHurt && boxOverlayRect(this.swordHitbox, x, y, w, h);
     }
 
+
+    public hurtCollision(x : number, y : number, w : number, h : number, 
+        dmg : number, knockback : number, ev : GameEvent) : boolean {
+
+        const KNOCKBACK_TIME = 30;
+
+        if (this.dying || this.hurtTimer > 0) return;
+
+        if (boxOverlay(this.pos, this.center, this.hitbox,
+            x, y, w, h)) {
+            
+            this.hurt(ev);
+            
+            this.knockbackTimer = KNOCKBACK_TIME;
+            this.speed.x = knockback;
+
+            // TODO: Reduce damage
+
+            return true;
+        }
+
+        return false;
+    }
 }
