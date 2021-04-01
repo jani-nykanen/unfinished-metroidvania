@@ -11,6 +11,7 @@ export class ObjectManager {
     }
     update(stage, camera, ev) {
         this.player.update(ev);
+        this.player.cameraCheck(camera);
         stage.objectCollisions(this.player, ev);
         this.projectiles.update(stage, camera, ev);
         for (let e of this.enemies) {

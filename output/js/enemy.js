@@ -48,7 +48,8 @@ export class Enemy extends CollisionObject {
         c.drawSprite(this.spr, bmp, px, py, this.flip);
     }
     playerEvent(pl, ev) { }
-    hurt(dmg, flyingText, ev) {
+    hurt(dmg, flyingText, knockback, ev) {
+        const BASE_KNOCKBACK = 1.0;
         const HURT_TIME = 30;
         const MESSAGE_SPEED = 1;
         if ((this.health -= dmg) <= 0) {
@@ -57,12 +58,13 @@ export class Enemy extends CollisionObject {
         }
         else {
             this.hurtTimer = HURT_TIME + (this.hurtTimer % 2);
+            this.speed.x = BASE_KNOCKBACK * knockback * this.mass;
         }
         nextObject(flyingText, FlyingText).spawn(dmg, this.pos.x, this.pos.y + this.center.y - this.spr.height / 2, MESSAGE_SPEED);
     }
     playerCollision(pl, flyingText, ev) {
         const PLAYER_KNOCKBACK = 2.0;
-        const SELF_KNOCKBACK = 2.0;
+        const SELF_KNOCKBACK = 1.0;
         if (this.isDeactivated())
             return false;
         this.playerEvent(pl, ev);
@@ -70,9 +72,8 @@ export class Enemy extends CollisionObject {
         let swordHitbox = pl.getSwordHitbox();
         if (pl.getSwordHitId() > this.lastHitId &&
             pl.canHurt() && boxOverlay(this.pos, this.center, this.collisionBox, swordHitbox.x - swordHitbox.w / 2, swordHitbox.y - swordHitbox.h / 2, swordHitbox.w, swordHitbox.h)) {
-            this.hurt(pl.getAttackDamage(), flyingText, ev);
+            this.hurt(pl.getAttackDamage(), flyingText, -dir * pl.getAttackDamage(), ev);
             this.lastHitId = pl.getSwordHitId();
-            this.speed.x = -SELF_KNOCKBACK * dir * this.mass;
             pl.downAttackBoost();
             return true;
         }
@@ -85,9 +86,10 @@ export class Enemy extends CollisionObject {
             return false;
         let hitbox = p.getHitbox();
         let pos = p.getPos();
+        let dir = p.getPos().x - this.pos.x > 0 ? 1 : -1;
         if (!p.isDying() && boxOverlay(this.pos, this.center, this.hitbox, pos.x - hitbox.x / 2, pos.y - hitbox.y / 2, hitbox.x, hitbox.y)) {
             p.kill(ev);
-            this.hurt(p.getDamage(), flyingText, ev);
+            this.hurt(p.getDamage(), flyingText, -dir * p.getDamage(), ev);
             // Needed if kills the bullet and causes the explosion
             if (p.getExplosionId() >= 0)
                 this.lastExplosionId = p.getExplosionId();
@@ -97,7 +99,7 @@ export class Enemy extends CollisionObject {
             this.lastExplosionId < p.getExplosionId() &&
             p.checkExplosion(this.pos.x + this.center.x - this.hitbox.x / 2, this.pos.y + this.center.y - this.hitbox.y / 2, this.hitbox.x, this.hitbox.y)) {
             this.lastExplosionId = p.getExplosionId();
-            this.hurt(p.getDamage(), flyingText, ev);
+            this.hurt(p.getDamage(), flyingText, -dir * p.getDamage(), ev);
             return true;
         }
         return false;

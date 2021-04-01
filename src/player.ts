@@ -8,6 +8,7 @@ import { ObjectPool } from "./objectpool.js";
 import { Projectile } from "./projectile.js";
 import { GameState } from "./state.js";
 import { Dust } from "./dust.js";
+import { Camera } from "./camera.js";
 
 enum ChargeType {
     Sword = 0,
@@ -58,6 +59,8 @@ export class Player extends CollisionObject {
 
     private flip : Flip;
     private dir : number;
+
+    private cameraJumpDelta : number;
 
     private readonly projectiles : ObjectPool<Projectile>;
     private readonly state : GameState;
@@ -110,6 +113,8 @@ export class Player extends CollisionObject {
       
         this.flip = Flip.None;
         this.dir = 1;
+
+        this.cameraJumpDelta = 0;
     
         this.downAttacking = false;
         this.downAttackWait = 0;
@@ -300,6 +305,8 @@ export class Player extends CollisionObject {
             this.climbing = true;
             this.charging = false;
             this.shooting = false;
+
+            this.cameraJumpDelta = this.climbX - this.pos.x;
 
             this.pos.x = this.climbX;
 
@@ -889,6 +896,16 @@ export class Player extends CollisionObject {
             return true;
         }
         return false;
+    }
+
+
+    public cameraCheck(cam : Camera) {
+
+        if (Math.abs(this.cameraJumpDelta) > 0) {
+
+            cam.forceCenterOffsetJump(-this.cameraJumpDelta, 0);
+            this.cameraJumpDelta = 0;
+        }
     }
 
 

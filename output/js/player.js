@@ -46,6 +46,7 @@ export class Player extends CollisionObject {
         this.knockbackTimer = 0;
         this.flip = Flip.None;
         this.dir = 1;
+        this.cameraJumpDelta = 0;
         this.downAttacking = false;
         this.downAttackWait = 0;
         this.projectiles = projectiles;
@@ -171,6 +172,7 @@ export class Player extends CollisionObject {
             this.climbing = true;
             this.charging = false;
             this.shooting = false;
+            this.cameraJumpDelta = this.climbX - this.pos.x;
             this.pos.x = this.climbX;
             if (this.isLadderTop) {
                 this.pos.y += 6;
@@ -552,6 +554,12 @@ export class Player extends CollisionObject {
             return true;
         }
         return false;
+    }
+    cameraCheck(cam) {
+        if (Math.abs(this.cameraJumpDelta) > 0) {
+            cam.forceCenterOffsetJump(-this.cameraJumpDelta, 0);
+            this.cameraJumpDelta = 0;
+        }
     }
     canHurt() {
         return (this.attacking && ((!this.chargeAttack && this.spr.getColumn() < 2) || this.chargeAttack)) ||

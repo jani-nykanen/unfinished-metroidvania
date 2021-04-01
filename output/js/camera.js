@@ -9,8 +9,12 @@ export class Camera {
         this.height = height;
         this.centerOff = new Vector2();
         this.centerOffTarget = new Vector2();
+        this.waitTimer = 0;
     }
     followObject(o, ev) {
+        const MAX_WAIT_TIME = 120;
+        const WAIT_DELTA = 0.5;
+        const EPS = 0.1;
         const FORWARD = 16;
         const MOVE_SPEED_X = 0.5;
         const VERTICAL_DEADZONE = 16;
@@ -21,8 +25,28 @@ export class Camera {
         if (Math.abs(d) >= VERTICAL_DEADZONE) {
             this.pos.y = py + VERTICAL_DEADZONE * Math.sign(d);
         }
-        this.centerOffTarget.x = Math.round(ev.getStick().x * FORWARD);
+        let target = ev.getStick().x * FORWARD;
+        if (Math.abs(target) > EPS) {
+            if (Math.sign(target) != Math.sign(this.centerOffTarget.x)) {
+                this.waitTimer = 0;
+            }
+            else {
+                this.waitTimer = Math.min(this.waitTimer + WAIT_DELTA * Math.abs(ev.getStick().x) * ev.step, MAX_WAIT_TIME);
+            }
+            this.centerOffTarget.x = Math.round(target);
+        }
+        else {
+            if (this.waitTimer > 0.0) {
+                this.waitTimer -= ev.step;
+            }
+            if (this.waitTimer <= 0)
+                this.centerOffTarget.x = 0;
+        }
         this.centerOff.x = updateSpeedAxis(this.centerOff.x, this.centerOffTarget.x, MOVE_SPEED_X * ev.step);
+    }
+    forceCenterOffsetJump(jumpx, jumpy) {
+        this.centerOff.x += jumpx;
+        this.centerOff.y += jumpy;
     }
     restrictCamera(x, y, w, h) {
         // Left

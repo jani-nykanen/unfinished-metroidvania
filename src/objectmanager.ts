@@ -32,6 +32,7 @@ export class ObjectManager {
     public update(stage : Stage, camera : Camera, ev : GameEvent) {
 
         this.player.update(ev);
+        this.player.cameraCheck(camera);
         stage.objectCollisions(this.player, ev); 
     
         this.projectiles.update(stage, camera, ev);
