@@ -3,11 +3,12 @@ import { Sprite } from "./core/sprite.js";
 import { Vector2 } from "./core/vector.js";
 import { FlyingText } from "./flyingtext.js";
 export class Enemy extends CollisionObject {
-    constructor(x, y, id = 0, health = 1) {
+    constructor(x, y, id = 0, health = 1, attackPower = 1) {
         super(x, y);
         this.isDeactivated = () => (this.dying || !this.exist || !this.inCamera);
         this.maxHealth = health;
         this.health = this.maxHealth;
+        this.attackPower = attackPower;
         this.startPos = this.pos.clone();
         this.dir = 0;
         this.id = id;
@@ -64,7 +65,6 @@ export class Enemy extends CollisionObject {
     }
     playerCollision(pl, flyingText, ev) {
         const PLAYER_KNOCKBACK = 2.0;
-        const SELF_KNOCKBACK = 1.0;
         if (this.isDeactivated())
             return false;
         this.playerEvent(pl, ev);
@@ -77,7 +77,7 @@ export class Enemy extends CollisionObject {
             pl.downAttackBoost();
             return true;
         }
-        pl.hurtCollision(this.pos.x + this.center.x - this.hitbox.x / 2, this.pos.y + this.center.y - this.hitbox.y / 2, this.hitbox.x, this.hitbox.y, 1, PLAYER_KNOCKBACK * dir, ev);
+        pl.hurtCollision(this.pos.x + this.center.x - this.hitbox.x / 2, this.pos.y + this.center.y - this.hitbox.y / 2, this.hitbox.x, this.hitbox.y, this.attackPower, PLAYER_KNOCKBACK * dir, ev);
         return false;
     }
     projectileCollision(p, flyingText, ev) {

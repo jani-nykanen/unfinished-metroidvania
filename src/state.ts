@@ -35,6 +35,12 @@ export class GameState {
     public getMoney = () : number => this.money;
 
 
+    public addHealth(amount : number) {
+
+        this.health = clamp(this.health + amount, 0, this.maxHealth);
+    }
+
+
     public addAmmo(count : number) {
 
         this.bullets = clamp(this.bullets + count, 0, this.maxBullets);
@@ -52,4 +58,5 @@ export class GameState {
 
         return 1;
     }
+
 }

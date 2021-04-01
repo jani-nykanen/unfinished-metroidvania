@@ -189,6 +189,7 @@ export abstract class GameObject extends WeakGameObject {
     protected speed : Vector2;
     protected target : Vector2;
     protected friction : Vector2;
+    protected facingDir : number;
 
 
     constructor(x : number, y : number) {
@@ -236,8 +237,9 @@ export abstract class GameObject extends WeakGameObject {
     }
 
 
-    public getSpeed = () => this.speed.clone();
-    public getTarget = () => this.target.clone();
+    public getSpeed = () : Vector2 => this.speed.clone();
+    public getTarget = () : Vector2 => this.target.clone();
+    public getFacingDirection = () : number => this.facingDir;
 }
 
 

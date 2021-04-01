@@ -12,6 +12,9 @@ export class GameState {
         this.bullets = this.maxBullets;
         this.money = 0;
     }
+    addHealth(amount) {
+        this.health = clamp(this.health + amount, 0, this.maxHealth);
+    }
     addAmmo(count) {
         this.bullets = clamp(this.bullets + count, 0, this.maxBullets);
     }

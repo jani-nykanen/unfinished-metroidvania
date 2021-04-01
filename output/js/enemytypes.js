@@ -5,7 +5,7 @@ import { Enemy } from "./enemy.js";
 export const getEnemyType = (index) => [Slime][index];
 export class Slime extends Enemy {
     constructor(x, y) {
-        super(x, y, 0, 3);
+        super(x, y, 0, 3, 2);
         const BASE_GRAVITY = 2.0;
         this.collisionBox = new Vector2(8, 8);
         this.hitbox = new Vector2(8, 8);

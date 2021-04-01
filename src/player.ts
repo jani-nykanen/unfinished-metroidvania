@@ -124,6 +124,18 @@ export class Player extends CollisionObject {
     }
 
 
+    private resetFlags() {
+
+        this.jumpTimer = 0;
+        this.climbing = false;
+        this.downAttacking = false;
+        this.attacking = false;
+        this.shooting = false;
+        this.chargeAttack = false;
+        this.charging = false;
+    }
+
+
     protected die(ev : GameEvent) {
 
         return true;
@@ -697,6 +709,20 @@ export class Player extends CollisionObject {
     }
 
 
+    private computeFacingDirection(ev : GameEvent) {
+
+        const EPS = 0.1;
+
+        this.facingDir = ev.getStick().x;
+    
+        if (Math.abs(this.facingDir) < EPS) {
+
+            if (this.attacking || this.shooting)
+                this.facingDir = this.dir;
+        }
+    }
+
+
     protected updateLogic(ev : GameEvent) {
 
         this.control(ev);
@@ -704,6 +730,7 @@ export class Player extends CollisionObject {
         this.updateTimers(ev);
         this.updateDust(ev);
         this.computeSwordHitbox();
+        this.computeFacingDirection(ev);
 
         this.canJump = false;
         this.touchLadder = false;
@@ -836,22 +863,16 @@ export class Player extends CollisionObject {
     }
 
 
-    public hurt(ev : GameEvent) {
+    public hurt(dmg : number, ev : GameEvent) {
 
         const HURT_TIME = 60;
 
         if (this.dying || this.hurtTimer > 0) return;
         
         this.hurtTimer = HURT_TIME;
+        this.state.addHealth(-dmg);
 
-        // TODO: 'resetFlags' method, maybe?
-        this.jumpTimer = 0;
-        this.climbing = false;
-        this.downAttacking = false;
-        this.attacking = false;
-        this.shooting = false;
-        this.chargeAttack = false;
-        this.charging = false;
+        this.resetFlags();
     }
 
 
@@ -953,7 +974,7 @@ export class Player extends CollisionObject {
         if (boxOverlay(this.pos, this.center, this.hitbox,
             x, y, w, h)) {
             
-            this.hurt(ev);
+            this.hurt(dmg, ev);
             
             this.knockbackTimer = KNOCKBACK_TIME;
             this.speed.x = knockback;

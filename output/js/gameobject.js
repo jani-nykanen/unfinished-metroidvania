@@ -94,6 +94,7 @@ export class GameObject extends WeakGameObject {
         super(x, y);
         this.getSpeed = () => this.speed.clone();
         this.getTarget = () => this.target.clone();
+        this.getFacingDirection = () => this.facingDir;
         this.speed = new Vector2();
         this.target = this.speed.clone();
         this.friction = new Vector2(1, 1);

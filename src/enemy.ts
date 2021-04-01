@@ -22,18 +22,20 @@ export abstract class Enemy extends CollisionObject {
 
     protected health : number;
     protected maxHealth : number;
+    protected attackPower : number;
 
     private hurtTimer : number;
     private lastHitId : number;
     private lastExplosionId : number;
 
     
-    constructor(x : number, y : number, id = 0, health = 1) {
+    constructor(x : number, y : number, id = 0, health = 1, attackPower = 1) {
 
         super(x, y);
 
         this.maxHealth = health;
         this.health = this.maxHealth;
+        this.attackPower = attackPower;
 
         this.startPos = this.pos.clone();
 
@@ -133,7 +135,6 @@ export abstract class Enemy extends CollisionObject {
     public playerCollision(pl : Player, flyingText : Array<FlyingText>, ev : GameEvent) : boolean {
 
         const PLAYER_KNOCKBACK = 2.0;
-        const SELF_KNOCKBACK = 1.0;
 
         if (this.isDeactivated()) return false;
 
@@ -159,8 +160,8 @@ export abstract class Enemy extends CollisionObject {
         pl.hurtCollision(
             this.pos.x + this.center.x - this.hitbox.x/2, 
             this.pos.y + this.center.y - this.hitbox.y/2,
-            this.hitbox.x, this.hitbox.y, 1, PLAYER_KNOCKBACK * dir,
-            ev);
+            this.hitbox.x, this.hitbox.y, this.attackPower, 
+            PLAYER_KNOCKBACK * dir, ev);
 
         return false;
     }

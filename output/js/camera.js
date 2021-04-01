@@ -25,7 +25,7 @@ export class Camera {
         if (Math.abs(d) >= VERTICAL_DEADZONE) {
             this.pos.y = py + VERTICAL_DEADZONE * Math.sign(d);
         }
-        let target = ev.getStick().x * FORWARD;
+        let target = o.getFacingDirection() * FORWARD;
         if (Math.abs(target) > EPS) {
             if (Math.sign(target) != Math.sign(this.centerOffTarget.x)) {
                 this.waitTimer = 0;

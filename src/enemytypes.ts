@@ -19,7 +19,7 @@ export class Slime extends Enemy {
 
     constructor(x : number, y : number) {
 
-        super(x, y, 0, 3);
+        super(x, y, 0, 3, 2);
 
         const BASE_GRAVITY = 2.0;
 
