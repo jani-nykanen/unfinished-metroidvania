@@ -89,5 +89,26 @@ export class Rect {
 	}
 
 
-	clone = () : Rect => new Rect(this.x, this.y, this.w, this.h);
+	public clone = () : Rect => new Rect(this.x, this.y, this.w, this.h);
+}
+
+
+export class RGBA {
+
+	public r : number;
+	public g : number;
+	public b : number;
+	public a : number;
+
+
+	constructor(r = 0, g = 0, b = 0, a = 1) {
+
+		this.r = r;
+		this.g = g;
+		this.b = b;
+		this.a = a;
+	}
+
+
+	public clone = () : RGBA => new RGBA(this.r, this.g, this.b, this.a);
 }

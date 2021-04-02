@@ -52,4 +52,13 @@ export class ObjectPool<T extends CollisionObject> {
             cb(o);
         }
     }
+
+
+    public killAll() {
+
+        for (let o of this.objects) {
+
+            o.forceKill();
+        }
+    }
 }

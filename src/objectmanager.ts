@@ -1,6 +1,7 @@
 import { Camera } from "./camera.js";
 import { Canvas } from "./core/canvas.js";
 import { GameEvent } from "./core/core.js";
+import { TransitionEffectManager } from "./core/transition.js";
 import { Enemy } from "./enemy.js";
 import { getEnemyType } from "./enemytypes.js";
 import { FlyingText } from "./flyingtext.js";
@@ -98,4 +99,31 @@ export class ObjectManager {
 
         cam.setPosition(this.player.getPos());
     }
+
+
+    public focusOnPlayer(tr : TransitionEffectManager, cam : Camera) {
+
+        tr.setCenter(cam.getObjectRelativePosition(this.player));
+    }
+
+
+    public reset() {
+
+        this.player.reset();
+
+        this.enemies = new Array<Enemy>();
+        this.projectiles.killAll();
+    }
+
+
+    public initialCameraCheck(cam : Camera) {
+
+        for (let e of this.enemies) {
+
+            e.cameraCheck(cam);
+        }
+    }
+
+
+    public isPlayerDead = () : boolean => !this.player.doesExist();
 }

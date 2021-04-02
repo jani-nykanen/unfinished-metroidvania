@@ -24,4 +24,9 @@ export class ObjectPool {
             cb(o);
         }
     }
+    killAll() {
+        for (let o of this.objects) {
+            o.forceKill();
+        }
+    }
 }

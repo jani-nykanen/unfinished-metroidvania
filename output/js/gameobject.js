@@ -82,6 +82,10 @@ export class WeakGameObject extends ExistingObject {
     overlayObject(o) {
         return boxOverlay(this.pos, this.center, this.hitbox, o.pos.x + o.center.x - o.hitbox.x / 2, o.pos.y + o.center.y - o.hitbox.y / 2, o.hitbox.x, o.hitbox.y);
     }
+    forceKill() {
+        this.exist = false;
+        this.dying = false;
+    }
     updateLogic(ev) { }
     ;
     outsideCameraEvent() { }

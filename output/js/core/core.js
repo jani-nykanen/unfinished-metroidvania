@@ -1,8 +1,9 @@
 import { AssetManager } from "./assets.js";
 import { Canvas } from "./canvas.js";
 import { InputManager } from "./input.js";
+import { TransitionEffectManager } from "./transition.js";
 export class GameEvent {
-    constructor(step, core, canvas, input, assets) {
+    constructor(step, core, canvas, input, assets, transition) {
         this.leftPress = () => this.input.leftPress();
         this.rightPress = () => this.input.rightPress();
         this.upPress = () => this.input.upPress();
@@ -14,6 +15,7 @@ export class GameEvent {
         this.canvas = canvas;
         this.input = input;
         this.assets = assets;
+        this.transition = transition;
     }
     getStick() {
         return this.input.getStick();
@@ -37,7 +39,8 @@ export class Core {
             .addAction("up", "ArrowUp", 12)
             .addAction("right", "ArrowRight", 15)
             .addAction("down", "ArrowDown", 13),
-            this.ev = new GameEvent(frameSkip + 1, this, this.canvas, this.input, this.assets);
+            this.transition = new TransitionEffectManager();
+        this.ev = new GameEvent(frameSkip + 1, this, this.canvas, this.input, this.assets, this.transition);
         this.timeSum = 0.0;
         this.oldTime = 0.0;
         this.initialized = false;
@@ -81,12 +84,14 @@ export class Core {
                 this.activeScene.update(this.ev);
             }
             this.canvas.update(this.ev);
+            this.transition.update(this.ev);
             this.input.postUpdate();
             this.timeSum -= FRAME_WAIT;
         }
         if (this.initialized) {
             if (this.activeScene != null)
                 this.activeScene.redraw(this.canvas);
+            this.transition.draw(this.canvas);
         }
         else {
             this.drawLoadingScreen(this.canvas);

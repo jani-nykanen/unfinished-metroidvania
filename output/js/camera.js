@@ -16,8 +16,9 @@ export class Camera {
         const WAIT_DELTA = 0.5;
         const EPS = 0.1;
         const FORWARD = 16;
-        const MOVE_SPEED_X = 0.5;
         const VERTICAL_DEADZONE = 16;
+        if (o.isDying() || !o.doesExist())
+            return;
         let px = Math.floor(o.getPos().x);
         let py = Math.floor(o.getPos().y);
         this.pos.x = px;
@@ -42,11 +43,17 @@ export class Camera {
             if (this.waitTimer <= 0)
                 this.centerOffTarget.x = 0;
         }
+    }
+    update(ev) {
+        const MOVE_SPEED_X = 0.5;
         this.centerOff.x = updateSpeedAxis(this.centerOff.x, this.centerOffTarget.x, MOVE_SPEED_X * ev.step);
     }
     forceCenterOffsetJump(jumpx, jumpy) {
         this.centerOff.x += jumpx;
         this.centerOff.y += jumpy;
+    }
+    forceMinimumWaitTime(time) {
+        this.waitTimer = Math.max(time, this.waitTimer);
     }
     restrictCamera(x, y, w, h) {
         // Left
@@ -85,5 +92,10 @@ export class Camera {
     }
     setPosition(pos) {
         this.pos = pos.clone();
+    }
+    getObjectRelativePosition(o) {
+        let p = o.getPos();
+        let topLeft = this.getTopLeftCorner();
+        return new Vector2((p.x - topLeft.x) % this.width, (p.y - topLeft.y) % this.height);
     }
 }

@@ -41,6 +41,7 @@ export const boxOverlayRect = (rect : Rect,
 
 export abstract class ExistingObject {
 
+
     protected exist : boolean;
 
 
@@ -166,6 +167,13 @@ export abstract class WeakGameObject extends ExistingObject {
     }
 
 
+    public forceKill() {
+
+        this.exist = false;
+        this.dying = false;
+    }
+
+
     protected updateLogic(ev : GameEvent) {};
     protected outsideCameraEvent() {}
     protected extendedLogic(ev : GameEvent) {}
@@ -178,6 +186,7 @@ export abstract class WeakGameObject extends ExistingObject {
 
     public isInCamera = () => this.inCamera;
     public isDying = () => this.dying;
+    
     
 }
 

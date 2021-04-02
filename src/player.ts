@@ -18,6 +18,8 @@ enum ChargeType {
 
 export class Player extends CollisionObject {
 
+    private checkpoint : Vector2;
+
     private renderOffset : Vector2;
 
     private jumpTimer : number;
@@ -62,6 +64,8 @@ export class Player extends CollisionObject {
 
     private cameraJumpDelta : number;
 
+    private deathTimer : number;
+
     private readonly projectiles : ObjectPool<Projectile>;
     private readonly state : GameState;
 
@@ -78,6 +82,21 @@ export class Player extends CollisionObject {
         this.center = new Vector2(0, 2);
         this.renderOffset = new Vector2();
 
+        this.dust = new Array<Dust> ();
+
+        this.sprWeapon = new Sprite(16, 16);
+        this.sprWeaponEffect = new Sprite(32, 32);
+        this.spr = new Sprite(16, 16);
+
+        this.projectiles = projectiles;
+        this.state = state;
+
+        this.resetProperties();
+    }
+
+
+    private resetProperties() {
+
         this.inCamera = true;
 
         this.canJump = false;
@@ -86,7 +105,6 @@ export class Player extends CollisionObject {
         this.downAttackJumpMargin = 0;
 
         this.boostJump = false;
-        this.dust = new Array<Dust> ();
         this.dustTimer = 0;
 
         this.touchLadder = false;
@@ -101,9 +119,7 @@ export class Player extends CollisionObject {
         this.swordHitbox = new Rect();
         this.swordHitId = 0;
 
-        this.sprWeapon = new Sprite(16, 16);
-        this.sprWeaponEffect = new Sprite(32, 32);
-        this.spr = new Sprite(16, 16);
+        this.spr.setFrame(3, 3);
 
         this.shooting = false;
         this.bulletId = 0;
@@ -119,11 +135,13 @@ export class Player extends CollisionObject {
         this.downAttacking = false;
         this.downAttackWait = 0;
 
-        this.projectiles = projectiles;
-        this.state = state;
+        this.deathTimer = 0;
+        this.dying = false;
+        this.exist = true;
     }
 
 
+    // Why do I even call them flags?
     private resetFlags() {
 
         this.jumpTimer = 0;
@@ -138,7 +156,12 @@ export class Player extends CollisionObject {
 
     protected die(ev : GameEvent) {
 
-        return true;
+        const MAX_DEATH_TIME = 120;
+        const FLICKER_SPEED = 3;
+
+        this.spr.animate(4, 0, 2, FLICKER_SPEED, ev.step);
+
+        return (this.deathTimer += ev.step) >= MAX_DEATH_TIME;
     }
 
 
@@ -595,7 +618,14 @@ export class Player extends CollisionObject {
 
         if (this.knockbackTimer > 0) {
 
-            this.knockbackTimer -= ev.step;
+            if ((this.knockbackTimer -= ev.step) <= 0 &&
+                this.state.getHealth() <= 0) {
+
+                this.dying = true;
+                this.deathTimer = 0;
+                return;
+            }
+
         }
         else if (this.hurtTimer > 0) {
 
@@ -715,7 +745,7 @@ export class Player extends CollisionObject {
 
         this.facingDir = ev.getStick().x;
     
-        if (Math.abs(this.facingDir) < EPS) {
+        if (this.canJump && Math.abs(this.facingDir) < EPS) {
 
             if (this.attacking || this.shooting)
                 this.facingDir = this.dir;
@@ -792,6 +822,30 @@ export class Player extends CollisionObject {
     }
 
 
+    private drawDeath(c : Canvas) {
+
+        const BALL_SPEED = 1.0;
+        const BALL_COUNT = 8;
+
+        let bmp = c.getBitmap("player");
+
+        let r = this.deathTimer * BALL_SPEED;
+        let x : number;
+        let y : number;
+
+        let angle = 0;
+        for (let i = 0; i < BALL_COUNT; ++ i) {
+
+            angle = Math.PI*2 / BALL_COUNT * i;
+
+            x = this.pos.x + this.center.x + Math.cos(angle) * r;
+            y = this.pos.y + this.center.y + Math.sin(angle) * r;
+
+            c.drawSprite(this.spr, bmp, Math.floor(x)-8, Math.floor(y)-8);
+        }
+    }
+
+
     public preDraw(c : Canvas) {
 
         for (let d of this.dust) {
@@ -802,6 +856,14 @@ export class Player extends CollisionObject {
 
 
     public draw(c : Canvas) {
+
+        if (!this.exist) return;
+
+        if (this.dying) {
+
+            this.drawDeath(c);
+            return;
+        }
 
         if (this.knockbackTimer <= 0 && this.hurtTimer > 0 &&
             Math.floor(this.hurtTimer / 4) % 2 == 1) {
@@ -857,9 +919,21 @@ export class Player extends CollisionObject {
     }
 
 
+    public reset() {
+
+        this.pos = this.checkpoint.clone();
+        this.resetProperties();
+
+        this.state.reset();
+    }
+
+
     public setPosition(x : number, y : number) {
 
-        this.pos = new Vector2(x, y - this.renderOffset.y);
+        this.pos = new Vector2(x, y);
+    
+        // !! TEMP !!
+        this.checkpoint = this.pos.clone();
     }
 
 
@@ -922,10 +996,17 @@ export class Player extends CollisionObject {
 
     public cameraCheck(cam : Camera) {
 
+        const ATTACK_CAM_FORCE_WAIT = 30;
+
         if (Math.abs(this.cameraJumpDelta) > 0) {
 
             cam.forceCenterOffsetJump(-this.cameraJumpDelta, 0);
             this.cameraJumpDelta = 0;
+        }
+
+        if (this.attacking || this.shooting) {
+
+            cam.forceMinimumWaitTime(ATTACK_CAM_FORCE_WAIT);
         }
     }
 

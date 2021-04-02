@@ -1,7 +1,7 @@
 import { Canvas } from "./core/canvas.js";
 import { GameEvent } from "./core/core.js";
 import { Vector2 } from "./core/vector.js";
-import { GameObject, updateSpeedAxis } from "./gameobject.js";
+import { GameObject, updateSpeedAxis, WeakGameObject } from "./gameobject.js";
 
 
 export class Camera {
@@ -37,8 +37,9 @@ export class Camera {
         const WAIT_DELTA = 0.5;
         const EPS = 0.1;
         const FORWARD = 16;
-        const MOVE_SPEED_X = 0.5;
         const VERTICAL_DEADZONE = 16;
+
+        if (o.isDying() || !o.doesExist()) return;
 
         let px = Math.floor(o.getPos().x);
         let py = Math.floor(o.getPos().y);
@@ -75,6 +76,12 @@ export class Camera {
             if (this.waitTimer <= 0) 
                 this.centerOffTarget.x = 0;
         }
+    }
+
+
+    public update(ev : GameEvent) {
+
+        const MOVE_SPEED_X = 0.5;
 
         this.centerOff.x = updateSpeedAxis(this.centerOff.x, 
             this.centerOffTarget.x, MOVE_SPEED_X * ev.step);
@@ -85,6 +92,12 @@ export class Camera {
 
         this.centerOff.x += jumpx;
         this.centerOff.y += jumpy;
+    }
+
+
+    public forceMinimumWaitTime(time : number) {
+
+        this.waitTimer = Math.max(time, this.waitTimer);
     }
 
 
@@ -155,4 +168,13 @@ export class Camera {
         this.pos = pos.clone();
     }
 
+
+    public getObjectRelativePosition(o : WeakGameObject) : Vector2 {
+
+        let p = o.getPos();
+        let topLeft = this.getTopLeftCorner();
+
+        return new Vector2((p.x - topLeft.x) % this.width, 
+            (p.y - topLeft.y) % this.height);
+    }
 }

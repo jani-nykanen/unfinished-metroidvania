@@ -59,4 +59,11 @@ export class GameState {
         return 1;
     }
 
+
+    public reset() {
+
+        this.health = this.maxHealth;
+        // this.bullets = this.maxBullets;
+    }
+
 }

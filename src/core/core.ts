@@ -2,6 +2,7 @@ import { AssetManager } from "./assets.js";
 import { Canvas } from "./canvas.js";
 import { InputManager } from "./input.js";
 import { Tilemap } from "./tilemap.js";
+import { TransitionEffectManager } from "./transition.js";
 import { State } from "./types.js";
 import { Vector2 } from "./vector.js";
 
@@ -10,6 +11,8 @@ export class GameEvent {
 
 
     public readonly step : number;
+    public readonly transition : TransitionEffectManager;
+
     private readonly input : InputManager;
     private readonly assets : AssetManager;
     private readonly core : Core;
@@ -17,13 +20,15 @@ export class GameEvent {
 
 
     constructor(step : number, core : Core, canvas : Canvas,
-        input : InputManager, assets : AssetManager) {
+        input : InputManager, assets : AssetManager,
+        transition : TransitionEffectManager) {
 
         this.core = core;
         this.step = step;
         this.canvas = canvas;
         this.input = input;
         this.assets = assets;
+        this.transition = transition;
     }
 
 
@@ -78,6 +83,7 @@ export class Core {
     private canvas : Canvas;
     private assets : AssetManager;
     private input : InputManager;
+    private transition : TransitionEffectManager;
     private ev : GameEvent;
 
     private activeScene : Scene;
@@ -100,8 +106,10 @@ export class Core {
             .addAction("right", "ArrowRight", 15)
             .addAction("down", "ArrowDown", 13),
 
+        this.transition = new TransitionEffectManager();
+
         this.ev = new GameEvent(frameSkip+1, this, this.canvas, 
-            this.input, this.assets);
+            this.input, this.assets, this.transition);
 
         this.timeSum = 0.0;
         this.oldTime = 0.0;
@@ -167,6 +175,7 @@ export class Core {
                 this.activeScene.update(this.ev);
             }
             this.canvas.update(this.ev);
+            this.transition.update(this.ev);
 
             this.input.postUpdate();
 
@@ -177,6 +186,8 @@ export class Core {
 
             if (this.activeScene != null)
                 this.activeScene.redraw(this.canvas);
+            
+            this.transition.draw(this.canvas);
         }
         else {
 

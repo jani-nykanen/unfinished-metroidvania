@@ -4,6 +4,7 @@ import { Player } from "./player.js";
 import { Projectile } from "./projectile.js";
 export class ObjectManager {
     constructor(state) {
+        this.isPlayerDead = () => !this.player.doesExist();
         this.projectiles = new ObjectPool(Projectile);
         this.player = new Player(80, 144 - 40, this.projectiles, state);
         this.enemies = new Array();
@@ -49,5 +50,18 @@ export class ObjectManager {
     }
     setInitialCameraPosition(cam) {
         cam.setPosition(this.player.getPos());
+    }
+    focusOnPlayer(tr, cam) {
+        tr.setCenter(cam.getObjectRelativePosition(this.player));
+    }
+    reset() {
+        this.player.reset();
+        this.enemies = new Array();
+        this.projectiles.killAll();
+    }
+    initialCameraCheck(cam) {
+        for (let e of this.enemies) {
+            e.cameraCheck(cam);
+        }
     }
 }

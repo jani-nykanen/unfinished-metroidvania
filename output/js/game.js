@@ -1,4 +1,5 @@
 import { Camera } from "./camera.js";
+import { TransitionEffectType } from "./core/transition.js";
 import { ObjectManager } from "./objectmanager.js";
 import { Stage } from "./stage.js";
 import { GameState } from "./state.js";
@@ -10,10 +11,28 @@ export class GameScene {
         this.objects = new ObjectManager(this.state);
         this.stage.parseObjects(this.objects);
         this.objects.setInitialCameraPosition(this.camera);
+        this.stage.restrictCamera(this.camera);
+        this.objects.initialCameraCheck(this.camera);
+        ev.transition.activate(false, TransitionEffectType.CirleIn, 1.0 / 30.0, null);
+        this.objects.focusOnPlayer(ev.transition, this.camera);
     }
     update(ev) {
+        if (ev.transition.isActive())
+            return;
+        if (this.objects.isPlayerDead()) {
+            ev.transition.activate(true, TransitionEffectType.CirleIn, 1.0 / 30.0, (ev) => {
+                this.objects.reset();
+                this.stage.parseObjects(this.objects);
+                this.objects.setInitialCameraPosition(this.camera);
+                this.stage.restrictCamera(this.camera);
+                this.objects.initialCameraCheck(this.camera);
+            });
+            this.objects.focusOnPlayer(ev.transition, this.camera);
+            return;
+        }
         this.stage.update(this.camera, ev);
         this.objects.update(this.stage, this.camera, ev);
+        this.camera.update(ev);
         this.stage.restrictCamera(this.camera);
     }
     genItemString(count, max, icon) {

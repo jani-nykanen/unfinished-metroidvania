@@ -41,3 +41,12 @@ export class Rect {
         this.h = h;
     }
 }
+export class RGBA {
+    constructor(r = 0, g = 0, b = 0, a = 1) {
+        this.clone = () => new RGBA(this.r, this.g, this.b, this.a);
+        this.r = r;
+        this.g = g;
+        this.b = b;
+        this.a = a;
+    }
+}

@@ -25,4 +25,8 @@ export class GameState {
     computeBaseProjectileDamage() {
         return 1;
     }
+    reset() {
+        this.health = this.maxHealth;
+        // this.bullets = this.maxBullets;
+    }
 }
