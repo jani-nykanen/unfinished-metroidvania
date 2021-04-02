@@ -464,7 +464,7 @@ export class Player extends CollisionObject {
         this.facingDir = ev.getStick().x;
         if (this.canJump && Math.abs(this.facingDir) < EPS) {
             if (this.attacking || this.shooting)
-                this.facingDir = this.dir;
+                this.facingDir = 0.5 * this.dir;
         }
     }
     updateLogic(ev) {

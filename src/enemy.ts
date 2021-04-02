@@ -207,23 +207,31 @@ export abstract class Enemy extends CollisionObject {
     }
 
 
-    protected enemyCollisionEvent(dirx : number, diry : number, ev : GameEvent) {};
-
-
     public enemyCollision(e : Enemy, ev : GameEvent) : boolean {
+
+        // To reduce unnecessary collision checks
+        const COLLISION_RADIUS = 32;
 
         if (this.isDeactivated() || e.isDeactivated())
             return false;
 
-        if (this.overlayObject(e)) {
+        // Infinity norm is faster to compute than 2-norm
+        if (Math.max(Math.abs(this.pos.x - e.pos.x), 
+                Math.abs(this.pos.y - e.pos.y)) > COLLISION_RADIUS) {
 
-            this.enemyCollisionEvent(
-                Math.sign(e.pos.x - this.pos.x), 
-                Math.sign(e.pos.y - this.pos.y), ev);
-            return true;
+            return false;
         }
+        
+        let px = this.pos.x + this.center.x -  this.hitbox.x/2;
+        let py = this.pos.y + this.center.y - this.hitbox.y/2;
+        let w = this.hitbox.x;
+        let h = this.hitbox.y;
 
-        return false;
+        return e.verticalCollision(px, py, w, 1, ev) ||
+            e.verticalCollision(px, py + h, w, -1, ev) ||
+            e.wallCollision(px, py, h, 1, ev) ||
+            e.wallCollision(px + w, py, h, -1, ev);
+
     }
 
 

@@ -25,6 +25,11 @@ export class ObjectManager {
                 this.projectiles.event(p => {
                     e.projectileCollision(p, this.flyingMessages, ev);
                 });
+                for (let e2 of this.enemies) {
+                    if (e2 != e) {
+                        e.enemyCollision(e2, ev);
+                    }
+                }
             }
         }
         for (let o of this.interactionObjects) {
@@ -78,6 +83,7 @@ export class ObjectManager {
         }
         for (let o of this.interactionObjects) {
             o.cameraCheck(cam);
+            o.playerCollision(this.player, null);
         }
     }
 }

@@ -25,6 +25,9 @@ export class Checkpoint extends InteractionTarget {
             pl.setCheckpointReference(this.pos);
             this.active = true;
             this.spr.setFrame(1, 0);
+            if (ev != null) {
+                // Sound effect
+            }
             return true;
         }
         if (this.active &&

@@ -53,6 +53,11 @@ export class Checkpoint extends InteractionTarget {
             this.active = true;
             this.spr.setFrame(1, 0);
 
+            if (ev != null) {
+
+                // Sound effect
+            }
+
             return true;
         }
 
