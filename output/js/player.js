@@ -14,6 +14,7 @@ export class Player extends CollisionObject {
     constructor(x, y, projectiles, state) {
         super(x, y);
         this.getSwordHitId = () => this.swordHitId;
+        this.checkpoint = null;
         this.friction = new Vector2(0.1, 0.1);
         this.hitbox = new Vector2(8, 12);
         this.collisionBox = new Vector2(8, 12);
@@ -570,10 +571,19 @@ export class Player extends CollisionObject {
         this.resetProperties();
         this.state.reset();
     }
-    setPosition(x, y) {
+    setInitialPosition(x, y) {
+        if (this.checkpoint != null)
+            return;
         this.pos = new Vector2(x, y);
-        // !! TEMP !!
         this.checkpoint = this.pos.clone();
+    }
+    setCheckpointReference(posRef) {
+        // Note that we don't copy the vector, just store
+        // the reference to it
+        this.checkpoint = posRef;
+    }
+    compareCheckpointReference(compPos) {
+        return compPos === this.checkpoint;
     }
     hurt(dmg, ev) {
         const HURT_TIME = 60;

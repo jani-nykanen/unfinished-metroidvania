@@ -14,6 +14,7 @@
         {"name": "particles",  "path": "particles.png"},
         {"name": "enemies",  "path": "enemies.png"},
         {"name": "fontSmall",  "path": "font_small.png"},
+        {"name": "checkpoint",  "path": "savepoint.png"},
         {"name": "font",  "path": "font.png"}
     ],
 

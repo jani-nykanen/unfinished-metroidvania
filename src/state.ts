@@ -17,7 +17,7 @@ export class GameState {
     constructor() {
 
         this.maxHealth = 10;
-        this.health = this.maxHealth;
+        this.health = 1; // this.maxHealth;
 
         this.maxBullets = 20;
         this.bullets = this.maxBullets;

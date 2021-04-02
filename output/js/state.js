@@ -7,7 +7,7 @@ export class GameState {
         this.getMaxBulletCount = () => this.maxBullets;
         this.getMoney = () => this.money;
         this.maxHealth = 10;
-        this.health = this.maxHealth;
+        this.health = 1; // this.maxHealth;
         this.maxBullets = 20;
         this.bullets = this.maxBullets;
         this.money = 0;

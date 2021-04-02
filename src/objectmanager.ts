@@ -5,6 +5,7 @@ import { TransitionEffectManager } from "./core/transition.js";
 import { Enemy } from "./enemy.js";
 import { getEnemyType } from "./enemytypes.js";
 import { FlyingText } from "./flyingtext.js";
+import { InteractionTarget } from "./interactiontarget.js";
 import { ObjectPool } from "./objectpool.js";
 import { Player } from "./player.js";
 import { Projectile } from "./projectile.js";
@@ -18,6 +19,7 @@ export class ObjectManager {
     private player : Player;
     private projectiles : ObjectPool<Projectile>;
     private enemies : Array<Enemy>;
+    private interactionObjects : Array<InteractionTarget>;
     private flyingMessages : Array<FlyingText>;
 
 
@@ -26,6 +28,7 @@ export class ObjectManager {
         this.projectiles = new ObjectPool<Projectile> (Projectile);
         this.player = new Player(80, 144 - 40, this.projectiles, state);
         this.enemies = new Array<Enemy>();
+        this.interactionObjects = new Array<InteractionTarget> ();
         this.flyingMessages = new Array<FlyingText> ();
     }
 
@@ -55,6 +58,13 @@ export class ObjectManager {
             }
         }
 
+        for (let o of this.interactionObjects) {
+
+            o.cameraCheck(camera);
+            o.update(ev);
+            o.playerCollision(this.player, ev);
+        }
+
         camera.followObject(this.player, ev);
 
         for (let m of this.flyingMessages) {
@@ -67,6 +77,11 @@ export class ObjectManager {
     public draw(c : Canvas) {
 
         this.player.preDraw(c);
+
+        for (let o of this.interactionObjects) {
+
+            o.draw(c);
+        }
         
         for (let e of this.enemies) {
 
@@ -83,9 +98,9 @@ export class ObjectManager {
     }
 
 
-    public setPlayerLocation(x : number, y : number) {
+    public setPlayerInitialPosition(x : number, y : number) {
 
-        this.player.setPosition(x*16 + 8, y*16 + 8);
+        this.player.setInitialPosition(x*16 + 8, y*16 + 8);
     }
 
 
@@ -93,6 +108,12 @@ export class ObjectManager {
 
         this.enemies.push(new (getEnemyType(index).prototype.constructor) (x*16 + 8, y*16 + 8));
     } 
+
+
+    public addInteractionObject(object : InteractionTarget) {
+
+        this.interactionObjects.push(object);
+    }
 
 
     public setInitialCameraPosition(cam : Camera) {
@@ -111,7 +132,8 @@ export class ObjectManager {
 
         this.player.reset();
 
-        this.enemies = new Array<Enemy>();
+        this.enemies = new Array<Enemy> ();
+        this.interactionObjects = new Array<InteractionTarget> ();
         this.projectiles.killAll();
     }
 
@@ -121,6 +143,11 @@ export class ObjectManager {
         for (let e of this.enemies) {
 
             e.cameraCheck(cam);
+        }
+
+        for (let o of this.interactionObjects) {
+
+            o.cameraCheck(cam);
         }
     }
 

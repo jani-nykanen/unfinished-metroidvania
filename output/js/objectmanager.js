@@ -8,6 +8,7 @@ export class ObjectManager {
         this.projectiles = new ObjectPool(Projectile);
         this.player = new Player(80, 144 - 40, this.projectiles, state);
         this.enemies = new Array();
+        this.interactionObjects = new Array();
         this.flyingMessages = new Array();
     }
     update(stage, camera, ev) {
@@ -26,6 +27,11 @@ export class ObjectManager {
                 });
             }
         }
+        for (let o of this.interactionObjects) {
+            o.cameraCheck(camera);
+            o.update(ev);
+            o.playerCollision(this.player, ev);
+        }
         camera.followObject(this.player, ev);
         for (let m of this.flyingMessages) {
             m.update(ev);
@@ -33,6 +39,9 @@ export class ObjectManager {
     }
     draw(c) {
         this.player.preDraw(c);
+        for (let o of this.interactionObjects) {
+            o.draw(c);
+        }
         for (let e of this.enemies) {
             e.draw(c);
         }
@@ -42,11 +51,14 @@ export class ObjectManager {
             m.draw(c);
         }
     }
-    setPlayerLocation(x, y) {
-        this.player.setPosition(x * 16 + 8, y * 16 + 8);
+    setPlayerInitialPosition(x, y) {
+        this.player.setInitialPosition(x * 16 + 8, y * 16 + 8);
     }
     addEnemy(index, x, y) {
         this.enemies.push(new (getEnemyType(index).prototype.constructor)(x * 16 + 8, y * 16 + 8));
+    }
+    addInteractionObject(object) {
+        this.interactionObjects.push(object);
     }
     setInitialCameraPosition(cam) {
         cam.setPosition(this.player.getPos());
@@ -57,11 +69,15 @@ export class ObjectManager {
     reset() {
         this.player.reset();
         this.enemies = new Array();
+        this.interactionObjects = new Array();
         this.projectiles.killAll();
     }
     initialCameraCheck(cam) {
         for (let e of this.enemies) {
             e.cameraCheck(cam);
+        }
+        for (let o of this.interactionObjects) {
+            o.cameraCheck(cam);
         }
     }
 }

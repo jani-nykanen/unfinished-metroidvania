@@ -1,3 +1,4 @@
+import { Checkpoint } from "./checkpoint.js";
 import { Vector2 } from "./core/vector.js";
 import { ObjectPool } from "./objectpool.js";
 import { Particle } from "./particles.js";
@@ -197,7 +198,11 @@ export class Stage {
                 switch (tid) {
                     // Player
                     case 0:
-                        objects.setPlayerLocation(x, y);
+                        objects.setPlayerInitialPosition(x, y);
+                        break;
+                    // Checkpoint
+                    case 1:
+                        objects.addInteractionObject(new Checkpoint(x * 16 + 8, y * 16 + 8));
                         break;
                     default:
                         break;
