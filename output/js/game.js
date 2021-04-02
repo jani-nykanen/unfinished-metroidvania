@@ -5,7 +5,7 @@ import { Stage } from "./stage.js";
 import { GameState } from "./state.js";
 export class GameScene {
     constructor(param, ev) {
-        this.camera = new Camera(0, 144, 160, 144);
+        this.camera = new Camera(0, 0, 160, 144);
         this.stage = new Stage(ev);
         this.state = new GameState();
         this.objects = new ObjectManager(this.state);

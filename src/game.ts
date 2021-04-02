@@ -18,7 +18,7 @@ export class GameScene implements Scene {
 
     constructor(param : any, ev : GameEvent) {
 
-        this.camera = new Camera(0, 144, 160, 144);
+        this.camera = new Camera(0, 0, 160, 144);
         this.stage = new Stage(ev);
         this.state = new GameState();
 
