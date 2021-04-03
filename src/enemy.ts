@@ -127,7 +127,7 @@ export abstract class Enemy extends CollisionObject {
 
         const BASE_KNOCKBACK = 1.0;
         const HURT_TIME = 30;
-        const MESSAGE_SPEED = 1;
+        const MESSAGE_SPEED = 1.0;
 
         if ((this.health -= dmg) <= 0) {
 
@@ -142,7 +142,7 @@ export abstract class Enemy extends CollisionObject {
             this.speed.x = knockbackDir * knockback * BASE_KNOCKBACK * this.mass;
         }
 
-        nextObject<FlyingText>(flyingText, FlyingText).spawn(dmg, 
+        nextObject<FlyingText>(flyingText, FlyingText).spawn(-dmg, 
             this.pos.x, this.pos.y + this.center.y - this.spr.height/2, 
             MESSAGE_SPEED)
     }

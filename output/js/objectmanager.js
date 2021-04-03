@@ -17,8 +17,8 @@ export class ObjectManager {
         this.player.update(ev);
         this.player.cameraCheck(camera);
         stage.objectCollisions(this.player, ev);
-        this.projectiles.update(stage, camera, null, ev);
-        this.collectibles.update(stage, camera, this.player, ev);
+        this.projectiles.update(stage, camera, null, null, ev);
+        this.collectibles.update(stage, camera, this.player, this.flyingMessages, ev);
         for (let e of this.enemies) {
             e.cameraCheck(camera);
             e.update(ev);
@@ -80,6 +80,7 @@ export class ObjectManager {
         this.enemies = new Array();
         this.interactionObjects = new Array();
         this.projectiles.killAll();
+        this.collectibles.killAll();
     }
     initialCameraCheck(cam) {
         for (let e of this.enemies) {

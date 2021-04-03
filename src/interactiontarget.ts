@@ -1,4 +1,5 @@
 import { GameEvent } from "./core/core.js";
+import { FlyingText } from "./flyingtext.js";
 import { CollisionObject, WeakGameObject } from "./gameobject.js";
 import { Player } from "./player.js";
 
@@ -28,7 +29,7 @@ export class InteractionTargetWithCollisions extends CollisionObject {
     }
 
 
-    public playerCollision(pl : Player, ev : GameEvent) : boolean {
+    public playerCollision(pl : Player, flyingText : Array<FlyingText>, ev : GameEvent) : boolean {
 
         return false;
     }

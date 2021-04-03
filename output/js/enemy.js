@@ -57,7 +57,7 @@ export class Enemy extends CollisionObject {
     hurt(dmg, flyingText, collectibles, knockbackDir, knockback, ev) {
         const BASE_KNOCKBACK = 1.0;
         const HURT_TIME = 30;
-        const MESSAGE_SPEED = 1;
+        const MESSAGE_SPEED = 1.0;
         if ((this.health -= dmg) <= 0) {
             this.spawnCollectibles(collectibles, knockbackDir);
             this.hurtTimer = 0;
@@ -67,7 +67,7 @@ export class Enemy extends CollisionObject {
             this.hurtTimer = HURT_TIME + (this.hurtTimer % 2);
             this.speed.x = knockbackDir * knockback * BASE_KNOCKBACK * this.mass;
         }
-        nextObject(flyingText, FlyingText).spawn(dmg, this.pos.x, this.pos.y + this.center.y - this.spr.height / 2, MESSAGE_SPEED);
+        nextObject(flyingText, FlyingText).spawn(-dmg, this.pos.x, this.pos.y + this.center.y - this.spr.height / 2, MESSAGE_SPEED);
     }
     playerCollision(pl, flyingText, collectibles, ev) {
         const PLAYER_KNOCKBACK = 2.0;

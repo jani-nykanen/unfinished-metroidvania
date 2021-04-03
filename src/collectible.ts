@@ -2,7 +2,8 @@ import { Canvas } from "./core/canvas.js";
 import { GameEvent } from "./core/core.js";
 import { Sprite } from "./core/sprite.js";
 import { Vector2 } from "./core/vector.js";
-import { CollisionObject } from "./gameobject.js";
+import { FlyingText } from "./flyingtext.js";
+import { CollisionObject, nextObject } from "./gameobject.js";
 import { Player } from "./player.js";
 
 
@@ -68,7 +69,10 @@ export class Collectible extends CollisionObject {
     }
 
 
-    public playerCollision(player : Player) : boolean {
+    public playerCollision(player : Player, 
+        flyingText : Array<FlyingText>, ev : GameEvent) : boolean {
+
+        const MESSAGE_SPEED = 1.0;     
 
         if (this.dying || !this.exist || !this.inCamera) return;
 
@@ -82,6 +86,10 @@ export class Collectible extends CollisionObject {
 
                 // Add health
             }
+
+            nextObject(flyingText, FlyingText)
+                .spawn(1, player.getPos().x, player.getPos().y - 4, 
+                    MESSAGE_SPEED, 1, 1);
 
             this.exist = false;
             return true;

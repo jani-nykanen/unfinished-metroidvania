@@ -49,7 +49,7 @@ export class Stage {
     update(cam, ev) {
         const CLOUD_SPEED = 0.5;
         this.cloudPos = (this.cloudPos + CLOUD_SPEED * ev.step) % 96;
-        this.particles.update(this, cam, null, ev);
+        this.particles.update(this, cam, null, null, ev);
     }
     drawBackground(c, cam) {
         const CLOUD_Y = 48;

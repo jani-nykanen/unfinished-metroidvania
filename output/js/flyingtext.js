@@ -2,6 +2,15 @@ import { Vector2 } from "./core/vector.js";
 import { ExistingObject } from "./gameobject.js";
 const FLYING_TEXT_MOVE_TIME = 16;
 const FLYING_TEXT_WAIT_TIME = 30;
+let shiftString = (str, shift) => {
+    if (shift == 0)
+        return str;
+    let out = "";
+    for (let i = 0; i < str.length; ++i) {
+        out += String.fromCharCode(str.charCodeAt(i) + shift);
+    }
+    return out;
+};
 export class FlyingText extends ExistingObject {
     constructor() {
         super();
@@ -26,8 +35,11 @@ export class FlyingText extends ExistingObject {
             }
         }
     }
-    spawn(value, x, y, speed) {
-        this.message = "-" + String(value);
+    spawn(value, x, y, speed, shift = 0, icon = -1) {
+        this.message = shiftString((value < 0 ? "-" : "+") + String(Math.abs(value)), shift * 16);
+        if (icon >= 0) {
+            this.message += String.fromCharCode(icon);
+        }
         this.waitTimer = FLYING_TEXT_WAIT_TIME;
         this.moveTimer = FLYING_TEXT_MOVE_TIME;
         this.pos = new Vector2(x, y);

@@ -1,6 +1,7 @@
 import { Camera } from "./camera.js";
 import { Canvas } from "./core/canvas.js";
 import { GameEvent } from "./core/core.js";
+import { FlyingText } from "./flyingtext.js";
 import { nextObject } from "./gameobject.js";
 import { InteractionTargetWithCollisions } from "./interactiontarget.js";
 import { Player } from "./player.js";
@@ -21,7 +22,8 @@ export class ObjectPool<T extends InteractionTargetWithCollisions> {
     }
 
 
-    public update(stage : Stage, cam : Camera, player : Player, ev : GameEvent) {
+    public update(stage : Stage, cam : Camera, player : Player, 
+        flyingText : Array<FlyingText>, ev : GameEvent) {
 
         for (let o of this.objects) {
 
@@ -31,7 +33,7 @@ export class ObjectPool<T extends InteractionTargetWithCollisions> {
 
             if (player != null) {
 
-                o.playerCollision(player, ev);
+                o.playerCollision(player, flyingText, ev);
             }
         }
     }

@@ -11,7 +11,7 @@ export class InteractionTargetWithCollisions extends CollisionObject {
     constructor(x, y) {
         super(x, y);
     }
-    playerCollision(pl, ev) {
+    playerCollision(pl, flyingText, ev) {
         return false;
     }
 }
