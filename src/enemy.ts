@@ -30,6 +30,9 @@ export abstract class Enemy extends CollisionObject {
     private lastHitId : number;
     private lastExplosionId : number;
 
+    // For spawning hearts
+    private playerHealthFactor : number;
+
     
     constructor(x : number, y : number, id = 0, health = 1, attackPower = 1) {
 
@@ -61,6 +64,8 @@ export abstract class Enemy extends CollisionObject {
     
         this.lastHitId = -1;
         this.lastExplosionId = -1;
+    
+        this.playerHealthFactor = 0;
     }
 
     
@@ -111,13 +116,18 @@ export abstract class Enemy extends CollisionObject {
     protected playerEvent(pl : Player, ev : GameEvent) {}
 
 
-    private spawnCollectibles(collectibles : ObjectPool<Collectible>, dir : number) {
+    private spawnCollectibles(collectibles : ObjectPool<Collectible>, dir : number, probabilityFactor = 0.0) {
 
         const JUMP_Y = -1.0;
+        const BASE_HEALTH_PROBABILITY = 0.25;
+
+        let id = 0;
+        if (Math.random() <= probabilityFactor * BASE_HEALTH_PROBABILITY)
+            id = 1;
 
         // Just spawn a coin for starters
         collectibles.nextObject().spawn(
-            0, this.pos.x, this.pos.y, dir, JUMP_Y);
+            id, this.pos.x, this.pos.y, dir, JUMP_Y);
     }
 
 
@@ -131,7 +141,7 @@ export abstract class Enemy extends CollisionObject {
 
         if ((this.health -= dmg) <= 0) {
 
-            this.spawnCollectibles(collectibles, knockbackDir);
+            this.spawnCollectibles(collectibles, knockbackDir, this.playerHealthFactor);
 
             this.hurtTimer = 0;
             this.kill(ev);
@@ -156,6 +166,8 @@ export abstract class Enemy extends CollisionObject {
         const PLAYER_KNOCKBACK = 2.0;
 
         if (this.isDeactivated()) return false;
+
+        this.playerHealthFactor = 1.0 - pl.getHealthRatio();
 
         this.playerEvent(pl, ev);
 

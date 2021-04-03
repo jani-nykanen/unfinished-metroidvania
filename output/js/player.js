@@ -13,8 +13,10 @@ var ChargeType;
 export class Player extends CollisionObject {
     constructor(x, y, projectiles, state) {
         super(x, y);
+        // Random getters, might need to organize them better later
         this.getSwordHitId = () => this.swordHitId;
         this.isDownAttack = () => this.downAttacking;
+        this.getHealthRatio = () => this.state.getHealth() / this.state.getMaxHealth();
         this.checkpoint = null;
         this.friction = new Vector2(0.1, 0.1);
         this.hitbox = new Vector2(8, 12);
@@ -679,5 +681,8 @@ export class Player extends CollisionObject {
     }
     addCoins(count) {
         this.state.addMoney(count);
+    }
+    addHealth(amount) {
+        this.state.addHealth(amount);
     }
 }

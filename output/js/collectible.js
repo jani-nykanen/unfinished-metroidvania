@@ -39,15 +39,18 @@ export class Collectible extends CollisionObject {
         const MESSAGE_SPEED = 1.0;
         if (this.dying || !this.exist || !this.inCamera)
             return;
+        let count = 0;
         if (this.waitTime <= 0 && player.overlayObject(this)) {
             if (this.id == 0) {
-                player.addCoins(1);
+                count = 1;
+                player.addCoins(count);
             }
             else if (this.id == 1) {
-                // Add health
+                count = 2;
+                player.addHealth(count);
             }
             nextObject(flyingText, FlyingText)
-                .spawn(1, player.getPos().x, player.getPos().y - 4, MESSAGE_SPEED, 1, 1);
+                .spawn(count, player.getPos().x, player.getPos().y - 4, MESSAGE_SPEED, 1, this.id + 1);
             this.exist = false;
             return true;
         }
