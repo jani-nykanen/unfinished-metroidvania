@@ -1104,5 +1104,12 @@ export class Player extends CollisionObject {
     }
 
 
+    public addCoins(count : number) {
+
+        this.state.addMoney(count);
+    }
+
+
     public getSwordHitId = () : number => this.swordHitId;
+    public isDownAttack = () : boolean => this.downAttacking;
 }

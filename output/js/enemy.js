@@ -49,23 +49,23 @@ export class Enemy extends CollisionObject {
         c.drawSprite(this.spr, bmp, px, py, this.flip);
     }
     playerEvent(pl, ev) { }
-    spawnCollectibles(collectibles) {
+    spawnCollectibles(collectibles, dir) {
         const JUMP_Y = -1.0;
         // Just spawn a coin for starters
-        collectibles.nextObject().spawn(0, this.pos.x, this.pos.y, 0, JUMP_Y);
+        collectibles.nextObject().spawn(0, this.pos.x, this.pos.y, dir, JUMP_Y);
     }
-    hurt(dmg, flyingText, collectibles, knockback, ev) {
+    hurt(dmg, flyingText, collectibles, knockbackDir, knockback, ev) {
         const BASE_KNOCKBACK = 1.0;
         const HURT_TIME = 30;
         const MESSAGE_SPEED = 1;
         if ((this.health -= dmg) <= 0) {
-            this.spawnCollectibles(collectibles);
+            this.spawnCollectibles(collectibles, knockbackDir);
             this.hurtTimer = 0;
             this.kill(ev);
         }
         else {
             this.hurtTimer = HURT_TIME + (this.hurtTimer % 2);
-            this.speed.x = BASE_KNOCKBACK * knockback * this.mass;
+            this.speed.x = knockbackDir * knockback * BASE_KNOCKBACK * this.mass;
         }
         nextObject(flyingText, FlyingText).spawn(dmg, this.pos.x, this.pos.y + this.center.y - this.spr.height / 2, MESSAGE_SPEED);
     }
@@ -74,11 +74,16 @@ export class Enemy extends CollisionObject {
         if (this.isDeactivated())
             return false;
         this.playerEvent(pl, ev);
+        // Cannot use Math.sign here since it might return 0
+        // (very unlikely since we are dealing with floating point numbers,
+        // but in theory possible)
         let dir = pl.getPos().x - this.pos.x > 0 ? 1 : -1;
+        if (pl.isDownAttack())
+            dir = 0;
         let swordHitbox = pl.getSwordHitbox();
         if (pl.getSwordHitId() > this.lastHitId &&
             pl.canHurt() && boxOverlay(this.pos, this.center, this.collisionBox, swordHitbox.x - swordHitbox.w / 2, swordHitbox.y - swordHitbox.h / 2, swordHitbox.w, swordHitbox.h)) {
-            this.hurt(pl.getAttackDamage(), flyingText, collectibles, -dir * pl.getAttackDamage(), ev);
+            this.hurt(pl.getAttackDamage(), flyingText, collectibles, -dir, pl.getAttackDamage(), ev);
             this.lastHitId = pl.getSwordHitId();
             pl.downAttackBoost();
             return true;
@@ -95,7 +100,7 @@ export class Enemy extends CollisionObject {
         let dir = p.getPos().x - this.pos.x > 0 ? 1 : -1;
         if (!p.isDying() && boxOverlay(this.pos, this.center, this.hitbox, pos.x - hitbox.x / 2, pos.y - hitbox.y / 2, hitbox.x, hitbox.y)) {
             p.kill(ev);
-            this.hurt(p.getDamage(), flyingText, collectibles, -dir * p.getDamage(), ev);
+            this.hurt(p.getDamage(), flyingText, collectibles, -dir, p.getDamage(), ev);
             // Needed if kills the bullet and causes the explosion
             if (p.getExplosionId() >= 0)
                 this.lastExplosionId = p.getExplosionId();
@@ -105,7 +110,7 @@ export class Enemy extends CollisionObject {
             this.lastExplosionId < p.getExplosionId() &&
             p.checkExplosion(this.pos.x + this.center.x - this.hitbox.x / 2, this.pos.y + this.center.y - this.hitbox.y / 2, this.hitbox.x, this.hitbox.y)) {
             this.lastExplosionId = p.getExplosionId();
-            this.hurt(p.getDamage(), flyingText, collectibles, -dir * p.getDamage(), ev);
+            this.hurt(p.getDamage(), flyingText, collectibles, -dir, p.getDamage(), ev);
             return true;
         }
         return false;

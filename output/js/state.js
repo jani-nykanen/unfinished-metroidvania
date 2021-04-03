@@ -7,7 +7,7 @@ export class GameState {
         this.getMaxBulletCount = () => this.maxBullets;
         this.getMoney = () => this.money;
         this.maxHealth = 10;
-        this.health = 1; // this.maxHealth;
+        this.health = this.maxHealth;
         this.maxBullets = 20;
         this.bullets = this.maxBullets;
         this.money = 0;
@@ -17,6 +17,9 @@ export class GameState {
     }
     addAmmo(count) {
         this.bullets = clamp(this.bullets + count, 0, this.maxBullets);
+    }
+    addMoney(count) {
+        this.money += count;
     }
     computeBaseSwordDamage() {
         // Obviously temporary

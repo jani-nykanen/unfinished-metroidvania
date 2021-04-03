@@ -14,6 +14,7 @@ export class Player extends CollisionObject {
     constructor(x, y, projectiles, state) {
         super(x, y);
         this.getSwordHitId = () => this.swordHitId;
+        this.isDownAttack = () => this.downAttacking;
         this.checkpoint = null;
         this.friction = new Vector2(0.1, 0.1);
         this.hitbox = new Vector2(8, 12);
@@ -675,5 +676,8 @@ export class Player extends CollisionObject {
             ++dmg;
         }
         return dmg;
+    }
+    addCoins(count) {
+        this.state.addMoney(count);
     }
 }

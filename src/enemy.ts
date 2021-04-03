@@ -111,19 +111,19 @@ export abstract class Enemy extends CollisionObject {
     protected playerEvent(pl : Player, ev : GameEvent) {}
 
 
-    private spawnCollectibles(collectibles : ObjectPool<Collectible>) {
+    private spawnCollectibles(collectibles : ObjectPool<Collectible>, dir : number) {
 
         const JUMP_Y = -1.0;
 
         // Just spawn a coin for starters
         collectibles.nextObject().spawn(
-            0, this.pos.x, this.pos.y, 0, JUMP_Y);
+            0, this.pos.x, this.pos.y, dir, JUMP_Y);
     }
 
 
     private hurt(dmg : number, flyingText : Array<FlyingText>, 
         collectibles : ObjectPool<Collectible>, 
-        knockback : number, ev : GameEvent) {
+        knockbackDir : number, knockback : number, ev : GameEvent) {
 
         const BASE_KNOCKBACK = 1.0;
         const HURT_TIME = 30;
@@ -131,7 +131,7 @@ export abstract class Enemy extends CollisionObject {
 
         if ((this.health -= dmg) <= 0) {
 
-            this.spawnCollectibles(collectibles);
+            this.spawnCollectibles(collectibles, knockbackDir);
 
             this.hurtTimer = 0;
             this.kill(ev);
@@ -139,7 +139,7 @@ export abstract class Enemy extends CollisionObject {
         else {
 
             this.hurtTimer = HURT_TIME + (this.hurtTimer % 2);
-            this.speed.x = BASE_KNOCKBACK * knockback * this.mass;
+            this.speed.x = knockbackDir * knockback * BASE_KNOCKBACK * this.mass;
         }
 
         nextObject<FlyingText>(flyingText, FlyingText).spawn(dmg, 
@@ -159,7 +159,12 @@ export abstract class Enemy extends CollisionObject {
 
         this.playerEvent(pl, ev);
 
+        // Cannot use Math.sign here since it might return 0
+        // (very unlikely since we are dealing with floating point numbers,
+        // but in theory possible)
         let dir = pl.getPos().x - this.pos.x > 0 ? 1 : -1;
+        if (pl.isDownAttack())
+            dir = 0;
 
         let swordHitbox = pl.getSwordHitbox();
         if (pl.getSwordHitId() > this.lastHitId && 
@@ -168,7 +173,7 @@ export abstract class Enemy extends CollisionObject {
             swordHitbox.w, swordHitbox.h)) {
             
             this.hurt(pl.getAttackDamage(), flyingText, collectibles,
-                -dir * pl.getAttackDamage(), ev);
+                -dir, pl.getAttackDamage(), ev);
             this.lastHitId = pl.getSwordHitId();
 
             pl.downAttackBoost();
@@ -204,7 +209,7 @@ export abstract class Enemy extends CollisionObject {
             hitbox.x, hitbox.y)) {
 
             p.kill(ev);
-            this.hurt(p.getDamage(), flyingText, collectibles, -dir * p.getDamage(), ev);
+            this.hurt(p.getDamage(), flyingText, collectibles, -dir, p.getDamage(), ev);
 
             // Needed if kills the bullet and causes the explosion
             if (p.getExplosionId() >= 0)
@@ -220,7 +225,7 @@ export abstract class Enemy extends CollisionObject {
                 this.hitbox.x, this.hitbox.y)) {
 
             this.lastExplosionId = p.getExplosionId();
-            this.hurt(p.getDamage(), flyingText, collectibles, -dir * p.getDamage(), ev);
+            this.hurt(p.getDamage(), flyingText, collectibles, -dir, p.getDamage(), ev);
 
             return true;
         }

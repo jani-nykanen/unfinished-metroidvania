@@ -10,6 +10,7 @@ export class Collectible extends CollisionObject {
     
 
     private id : number;
+    private waitTime : number;
 
 
     constructor() {
@@ -18,6 +19,7 @@ export class Collectible extends CollisionObject {
 
         this.exist = false;
         this.id = -1;
+        this.waitTime = 0;
 
         this.hitbox = new Vector2(8, 8);
         this.collisionBox = new Vector2(8, 10);
@@ -25,7 +27,7 @@ export class Collectible extends CollisionObject {
         this.spr = new Sprite(16, 16);
 
         this.bounceFactor = 0.90;
-        this.friction = new Vector2(0.1, 0.1);
+        this.friction = new Vector2(0.025, 0.05);
     }
 
 
@@ -40,14 +42,21 @@ export class Collectible extends CollisionObject {
         const ANIM_SPEED = 6;
 
         this.spr.animate(this.spr.getRow(), 0, 3, ANIM_SPEED, ev.step);
+
+        if (this.waitTime > 0) {
+
+            this.waitTime -= ev.step;
+        }
     }
 
 
     public spawn(id : number, x : number, y : number, 
         speedx = 0, speedy = 0) {
 
+        const BASE_WAIT_TIME = 30;
         const BASE_GRAVITY = 2.0;
 
+        this.waitTime = BASE_WAIT_TIME;
         this.id = id;
         this.spr.setFrame(0, this.id);
 
@@ -63,7 +72,16 @@ export class Collectible extends CollisionObject {
 
         if (this.dying || !this.exist || !this.inCamera) return;
 
-        if (player.overlayObject(this)) {
+        if (this.waitTime <= 0 && player.overlayObject(this)) {
+
+            if (this.id == 0) {
+
+                player.addCoins(1);
+            }
+            else if (this.id == 1) {
+
+                // Add health
+            }
 
             this.exist = false;
             return true;
