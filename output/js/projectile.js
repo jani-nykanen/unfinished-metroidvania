@@ -1,7 +1,7 @@
 import { Sprite } from "./core/sprite.js";
 import { Vector2 } from "./core/vector.js";
-import { CollisionObject } from "./gameobject.js";
-export class Projectile extends CollisionObject {
+import { InteractionTargetWithCollisions } from "./interactiontarget.js";
+export class Projectile extends InteractionTargetWithCollisions {
     constructor() {
         super(0, 0);
         this.isFriendly = () => this.friendly;

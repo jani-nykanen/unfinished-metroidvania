@@ -6,6 +6,8 @@ import { Sprite } from "./core/sprite.js";
 import { Vector2 } from "./core/vector.js";
 import { Projectile } from "./projectile.js";
 import { FlyingText } from "./flyingtext.js";
+import { ObjectPool } from "./objectpool.js";
+import { Collectible } from "./collectible.js";
 
 
 export abstract class Enemy extends CollisionObject {
@@ -109,13 +111,27 @@ export abstract class Enemy extends CollisionObject {
     protected playerEvent(pl : Player, ev : GameEvent) {}
 
 
-    private hurt(dmg : number, flyingText : Array<FlyingText>, knockback : number, ev : GameEvent) {
+    private spawnCollectibles(collectibles : ObjectPool<Collectible>) {
+
+        const JUMP_Y = -1.0;
+
+        // Just spawn a coin for starters
+        collectibles.nextObject().spawn(
+            0, this.pos.x, this.pos.y, 0, JUMP_Y);
+    }
+
+
+    private hurt(dmg : number, flyingText : Array<FlyingText>, 
+        collectibles : ObjectPool<Collectible>, 
+        knockback : number, ev : GameEvent) {
 
         const BASE_KNOCKBACK = 1.0;
         const HURT_TIME = 30;
         const MESSAGE_SPEED = 1;
 
         if ((this.health -= dmg) <= 0) {
+
+            this.spawnCollectibles(collectibles);
 
             this.hurtTimer = 0;
             this.kill(ev);
@@ -132,7 +148,10 @@ export abstract class Enemy extends CollisionObject {
     }
 
 
-    public playerCollision(pl : Player, flyingText : Array<FlyingText>, ev : GameEvent) : boolean {
+    public playerCollision(pl : Player, 
+        flyingText : Array<FlyingText>, 
+        collectibles : ObjectPool<Collectible>,
+        ev : GameEvent) : boolean {
 
         const PLAYER_KNOCKBACK = 2.0;
 
@@ -148,7 +167,7 @@ export abstract class Enemy extends CollisionObject {
             swordHitbox.x - swordHitbox.w/2, swordHitbox.y - swordHitbox.h/2,
             swordHitbox.w, swordHitbox.h)) {
             
-            this.hurt(pl.getAttackDamage(), flyingText, 
+            this.hurt(pl.getAttackDamage(), flyingText, collectibles,
                 -dir * pl.getAttackDamage(), ev);
             this.lastHitId = pl.getSwordHitId();
 
@@ -167,7 +186,10 @@ export abstract class Enemy extends CollisionObject {
     }
 
 
-    public projectileCollision(p : Projectile, flyingText : Array<FlyingText>, ev : GameEvent) : boolean {
+    public projectileCollision(p : Projectile, 
+        flyingText : Array<FlyingText>, 
+        collectibles : ObjectPool<Collectible>,
+        ev : GameEvent) : boolean {
 
         if (!p.isFriendly() || (p.isDying() && !p.isExplosive()) 
             || !p.doesExist() || !p.isInCamera()) 
@@ -182,7 +204,7 @@ export abstract class Enemy extends CollisionObject {
             hitbox.x, hitbox.y)) {
 
             p.kill(ev);
-            this.hurt(p.getDamage(), flyingText, -dir * p.getDamage(), ev);
+            this.hurt(p.getDamage(), flyingText, collectibles, -dir * p.getDamage(), ev);
 
             // Needed if kills the bullet and causes the explosion
             if (p.getExplosionId() >= 0)
@@ -198,7 +220,7 @@ export abstract class Enemy extends CollisionObject {
                 this.hitbox.x, this.hitbox.y)) {
 
             this.lastExplosionId = p.getExplosionId();
-            this.hurt(p.getDamage(), flyingText, -dir * p.getDamage(), ev);
+            this.hurt(p.getDamage(), flyingText, collectibles, -dir * p.getDamage(), ev);
 
             return true;
         }

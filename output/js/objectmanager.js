@@ -1,3 +1,4 @@
+import { Collectible } from "./collectible.js";
 import { getEnemyType } from "./enemytypes.js";
 import { ObjectPool } from "./objectpool.js";
 import { Player } from "./player.js";
@@ -10,20 +11,22 @@ export class ObjectManager {
         this.enemies = new Array();
         this.interactionObjects = new Array();
         this.flyingMessages = new Array();
+        this.collectibles = new ObjectPool(Collectible);
     }
     update(stage, camera, ev) {
         this.player.update(ev);
         this.player.cameraCheck(camera);
         stage.objectCollisions(this.player, ev);
-        this.projectiles.update(stage, camera, ev);
+        this.projectiles.update(stage, camera, null, ev);
+        this.collectibles.update(stage, camera, this.player, ev);
         for (let e of this.enemies) {
             e.cameraCheck(camera);
             e.update(ev);
-            e.playerCollision(this.player, this.flyingMessages, ev);
+            e.playerCollision(this.player, this.flyingMessages, this.collectibles, ev);
             stage.objectCollisions(e, ev);
             if (!e.isDeactivated()) {
                 this.projectiles.event(p => {
-                    e.projectileCollision(p, this.flyingMessages, ev);
+                    e.projectileCollision(p, this.flyingMessages, this.collectibles, ev);
                 });
                 for (let e2 of this.enemies) {
                     if (e2 != e) {
@@ -50,6 +53,7 @@ export class ObjectManager {
         for (let e of this.enemies) {
             e.draw(c);
         }
+        this.collectibles.draw(c);
         this.projectiles.draw(c);
         this.player.draw(c);
         for (let m of this.flyingMessages) {

@@ -1,4 +1,5 @@
 import { Camera } from "./camera.js";
+import { Collectible } from "./collectible.js";
 import { Canvas } from "./core/canvas.js";
 import { GameEvent } from "./core/core.js";
 import { TransitionEffectManager } from "./core/transition.js";
@@ -18,6 +19,7 @@ export class ObjectManager {
 
     private player : Player;
     private projectiles : ObjectPool<Projectile>;
+    private collectibles : ObjectPool<Collectible>;
     private enemies : Array<Enemy>;
     private interactionObjects : Array<InteractionTarget>;
     private flyingMessages : Array<FlyingText>;
@@ -30,6 +32,7 @@ export class ObjectManager {
         this.enemies = new Array<Enemy>();
         this.interactionObjects = new Array<InteractionTarget> ();
         this.flyingMessages = new Array<FlyingText> ();
+        this.collectibles = new ObjectPool<Collectible> (Collectible);
     }
 
 
@@ -39,20 +42,23 @@ export class ObjectManager {
         this.player.cameraCheck(camera);
         stage.objectCollisions(this.player, ev); 
     
-        this.projectiles.update(stage, camera, ev);
+        this.projectiles.update(stage, camera, null, ev);
+        this.collectibles.update(stage, camera, this.player, ev);
 
         for (let e of this.enemies) {
 
             e.cameraCheck(camera);
             e.update(ev);
-            e.playerCollision(this.player, this.flyingMessages, ev);
+            e.playerCollision(this.player,
+                this.flyingMessages, this.collectibles, ev);
             stage.objectCollisions(e, ev);
 
             if (!e.isDeactivated()) {
 
                 this.projectiles.event(
                     p => {
-                        e.projectileCollision(p, this.flyingMessages, ev);
+                        e.projectileCollision(p, 
+                            this.flyingMessages, this.collectibles, ev);
                     }
                 );
 
@@ -95,7 +101,8 @@ export class ObjectManager {
 
             e.draw(c);
         }
-
+        
+        this.collectibles.draw(c);
         this.projectiles.draw(c);
         this.player.draw(c);
 

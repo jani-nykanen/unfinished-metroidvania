@@ -4,11 +4,14 @@ export class ObjectPool {
         this.type = type;
         this.objects = new Array();
     }
-    update(stage, cam, ev) {
+    update(stage, cam, player, ev) {
         for (let o of this.objects) {
             o.cameraCheck(cam);
             o.update(ev);
             stage.objectCollisions(o, ev);
+            if (player != null) {
+                o.playerCollision(player, ev);
+            }
         }
     }
     draw(c) {
@@ -28,5 +31,8 @@ export class ObjectPool {
         for (let o of this.objects) {
             o.forceKill();
         }
+    }
+    clear() {
+        this.objects = new Array();
     }
 }

@@ -1,10 +1,12 @@
 import { InteractionTarget } from "./interactiontarget.js";
 import { Sprite } from "./core/sprite.js";
+import { Vector2 } from "./core/vector.js";
 export class Checkpoint extends InteractionTarget {
     constructor(x, y) {
         super(x, y);
         this.active = false;
         this.spr = new Sprite(16, 16);
+        this.hitbox = new Vector2(12, 12);
     }
     updateLogic(ev) {
         const ANIM_SPEED = 6;

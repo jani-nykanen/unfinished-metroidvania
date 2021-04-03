@@ -3,6 +3,7 @@ import { GameEvent } from "./core/core.js";
 import { InteractionTarget } from "./interactiontarget.js";
 import { Player } from "./player.js";
 import { Sprite } from "./core/sprite.js";
+import { Vector2 } from "./core/vector.js";
 
 
 export class Checkpoint extends InteractionTarget {
@@ -17,6 +18,8 @@ export class Checkpoint extends InteractionTarget {
 
         this.active = false;
         this.spr = new Sprite(16, 16);
+
+        this.hitbox = new Vector2(12, 12);
     }
 
 

@@ -2,10 +2,10 @@ import { Canvas } from "./core/canvas.js";
 import { GameEvent } from "./core/core.js";
 import { Sprite } from "./core/sprite.js";
 import { Vector2 } from "./core/vector.js";
-import { CollisionObject } from "./gameobject.js";
+import { InteractionTargetWithCollisions } from "./interactiontarget.js";
 
 
-export class Projectile extends CollisionObject {
+export class Projectile extends InteractionTargetWithCollisions {
 
 
     private id : number;

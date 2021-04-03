@@ -1,11 +1,11 @@
 import { Canvas } from "./core/canvas.js";
 import { GameEvent } from "./core/core.js";
-import { CollisionObject } from "./gameobject.js";
 import { Sprite } from "./core/sprite.js";
 import { Vector2 } from "./core/vector.js";
+import { InteractionTargetWithCollisions } from "./interactiontarget.js";
 
 
-export class Particle extends CollisionObject {
+export class Particle extends InteractionTargetWithCollisions {
 
 
     private timer : number;

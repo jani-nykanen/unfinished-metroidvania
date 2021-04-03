@@ -89,7 +89,7 @@ export class Stage {
         const CLOUD_SPEED = 0.5;
 
         this.cloudPos = (this.cloudPos + CLOUD_SPEED*ev.step) % 96;
-        this.particles.update(this, cam, ev);
+        this.particles.update(this, cam, null, ev);
     }   
 
 

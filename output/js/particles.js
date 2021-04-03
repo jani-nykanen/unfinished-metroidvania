@@ -1,7 +1,7 @@
-import { CollisionObject } from "./gameobject.js";
 import { Sprite } from "./core/sprite.js";
 import { Vector2 } from "./core/vector.js";
-export class Particle extends CollisionObject {
+import { InteractionTargetWithCollisions } from "./interactiontarget.js";
+export class Particle extends InteractionTargetWithCollisions {
     constructor() {
         super(0, 0);
         this.exist = false;

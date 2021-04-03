@@ -1,11 +1,13 @@
 import { Camera } from "./camera.js";
 import { Canvas } from "./core/canvas.js";
 import { GameEvent } from "./core/core.js";
-import { CollisionObject, ExistingObject, nextObject } from "./gameobject.js";
+import { nextObject } from "./gameobject.js";
+import { InteractionTargetWithCollisions } from "./interactiontarget.js";
+import { Player } from "./player.js";
 import { Stage } from "./stage.js";
 
 
-export class ObjectPool<T extends CollisionObject> {
+export class ObjectPool<T extends InteractionTargetWithCollisions> {
 
 
     private objects : Array<T>;
@@ -19,13 +21,18 @@ export class ObjectPool<T extends CollisionObject> {
     }
 
 
-    public update(stage : Stage, cam : Camera, ev : GameEvent) {
+    public update(stage : Stage, cam : Camera, player : Player, ev : GameEvent) {
 
         for (let o of this.objects) {
 
             o.cameraCheck(cam);
             o.update(ev);
             stage.objectCollisions(o, ev);
+
+            if (player != null) {
+
+                o.playerCollision(player, ev);
+            }
         }
     }
 
@@ -60,5 +67,11 @@ export class ObjectPool<T extends CollisionObject> {
 
             o.forceKill();
         }
+    }
+
+
+    public clear() {
+
+        this.objects = new Array<T> ();
     }
 }
