@@ -171,4 +171,6 @@ export class ObjectManager {
 
 
     public isPlayerDead = () : boolean => !this.player.doesExist();
+
+    public getItemGenerator = () : CollectibleItemGenerator => this.collectibles;
 }

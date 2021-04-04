@@ -1,4 +1,5 @@
 import { Checkpoint } from "./checkpoint.js";
+import { clamp } from "./core/mathext.js";
 import { Vector2 } from "./core/vector.js";
 import { ObjectPool } from "./objectpool.js";
 import { Particle } from "./particles.js";
@@ -25,7 +26,7 @@ const COLLISION_TABLE = [
     COL_WALL_LEFT | COL_DOWN | COL_WALL_RIGHT | COL_UP,
 ];
 export class Stage {
-    constructor(ev) {
+    constructor(itemGen, ev) {
         let baseMap = ev.getTilemap("fields");
         this.layers = baseMap.cloneLayers();
         this.collisionMap = ev.getTilemap("collisions").cloneLayer(0);
@@ -33,6 +34,7 @@ export class Stage {
         this.height = baseMap.height;
         this.particles = new ObjectPool(Particle);
         this.cloudPos = 0;
+        this.itemGen = itemGen;
     }
     getTile(l, x, y, def = 0) {
         if (l < 0 || l >= this.layers.length ||
@@ -127,6 +129,13 @@ export class Stage {
                 .spawn(x, y, new Vector2(Math.cos(angle) * speed, Math.sin(angle) * speed + JUMP_Y), Math.floor(Math.random() * 4), id, PARTICLE_TIME);
         }
     }
+    spawnCollectibles(x, y, dist) {
+        const JUMP_Y = -1.0;
+        const SPEED_FACTOR = 1.0;
+        let sign = dist < 0 ? -1 : 1;
+        let speed = SPEED_FACTOR * clamp(Math.abs(dist) / 16, 0, 1) * sign;
+        this.itemGen.spawn(x, y, speed, JUMP_Y);
+    }
     handleSpecialTileCollision(o, layer, x, y, colId, ev) {
         const LADDER_WIDTH = 8;
         const PARTICLE_COUNT = [4, 6];
@@ -143,6 +152,9 @@ export class Stage {
                 if (o.breakCollision(x * 16, y * 16, 16, 16, colId == 16, ev)) {
                     this.layers[layer][y * this.width + x] = 0;
                     this.spawnParticles(x * 16 + 8, y * 16 + 8, PARTICLE_COUNT[colId - 16], colId - 16);
+                    if (colId == 17) {
+                        this.spawnCollectibles(x * 16 + 8, y * 16 + 8, x * 16 + 8 - o.getPos().x);
+                    }
                 }
                 else {
                     this.handleBaseTileCollision(o, layer, x, y, 14, ev);

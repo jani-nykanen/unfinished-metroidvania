@@ -2,8 +2,10 @@ import { Camera } from "./camera.js";
 import { Checkpoint } from "./checkpoint.js";
 import { Canvas } from "./core/canvas.js";
 import { GameEvent } from "./core/core.js";
+import { clamp } from "./core/mathext.js";
 import { Vector2 } from "./core/vector.js";
 import { CollisionObject } from "./gameobject.js";
+import { CollectibleItemGenerator } from "./itemgen.js";
 import { ObjectManager } from "./objectmanager.js";
 import { ObjectPool } from "./objectpool.js";
 import { Particle } from "./particles.js";
@@ -45,11 +47,13 @@ export class Stage {
 
     private cloudPos : number;
 
+    private readonly itemGen : CollectibleItemGenerator;
+
     public readonly width : number;
     public readonly height : number;
 
 
-    constructor(ev : GameEvent) {
+    constructor(itemGen : CollectibleItemGenerator, ev : GameEvent) {
 
         let baseMap = ev.getTilemap("fields");
 
@@ -61,6 +65,8 @@ export class Stage {
         this.particles = new ObjectPool<Particle>(Particle);
 
         this.cloudPos = 0;
+
+        this.itemGen = itemGen;
     }
 
 
@@ -217,6 +223,18 @@ export class Stage {
     }
 
 
+    private spawnCollectibles(x : number, y : number, dist : number) {
+
+        const JUMP_Y = -1.0;
+        const SPEED_FACTOR = 1.0;
+
+        let sign = dist < 0 ? -1 : 1;
+        let speed = SPEED_FACTOR * clamp(Math.abs(dist) / 16, 0, 1) * sign;
+
+        this.itemGen.spawn(x, y, speed, JUMP_Y);
+    }
+
+
     private handleSpecialTileCollision(o : CollisionObject,
         layer: number, x : number, y : number,
         colId : number, ev : GameEvent) {
@@ -245,6 +263,12 @@ export class Stage {
 
                 this.layers[layer][y*this.width + x] = 0;
                 this.spawnParticles(x*16 + 8, y*16 + 8, PARTICLE_COUNT[colId-16], colId - 16);
+
+                if (colId == 17) {
+
+                    this.spawnCollectibles(x*16 + 8, y*16 + 8,
+                        x*16+8 - o.getPos().x);
+                }
             }
             else {
 

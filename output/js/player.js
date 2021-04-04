@@ -445,9 +445,9 @@ export class Player extends CollisionObject {
         const HEIGHT = 16;
         const CHARGE_WIDTH = 16;
         const CHARGE_HEIGHT = 20;
-        const DOWN_ATTACK_XOFF = 3;
+        const DOWN_ATTACK_XOFF = 2;
         const DOWN_ATTACK_YOFF = 10;
-        const DOWN_ATTACK_WIDTH = 8;
+        const DOWN_ATTACK_WIDTH = 10;
         const DOWN_ATTACK_HEIGHT = 12;
         if (this.attacking) {
             this.swordHitbox.x = this.pos.x + X_OFFSET * this.dir;

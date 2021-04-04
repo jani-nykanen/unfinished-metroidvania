@@ -6,6 +6,7 @@ import { Projectile } from "./projectile.js";
 export class ObjectManager {
     constructor(state) {
         this.isPlayerDead = () => !this.player.doesExist();
+        this.getItemGenerator = () => this.collectibles;
         this.projectiles = new ObjectPool(Projectile);
         this.player = new Player(80, 144 - 40, this.projectiles, state);
         this.enemies = new Array();

@@ -19,10 +19,10 @@ export class GameScene implements Scene {
     constructor(param : any, ev : GameEvent) {
 
         this.camera = new Camera(0, 0, 160, 144);
-        this.stage = new Stage(ev);
         this.state = new GameState();
 
         this.objects = new ObjectManager(this.state);
+        this.stage = new Stage(this.objects.getItemGenerator(), ev);
         this.stage.parseObjects(this.objects);
 
         this.objects.setInitialCameraPosition(this.camera);

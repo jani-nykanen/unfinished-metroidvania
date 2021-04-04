@@ -14,7 +14,6 @@ export class CollectibleItemGenerator extends ObjectPool {
         }
         else {
             healthFactor = (1.0 - this.state.getHealth() / this.state.getMaxHealth());
-            console.log(healthFactor);
             if (Math.random() <= HEALTH_PROB * healthFactor)
                 id = 1;
             // TODO: Ammo

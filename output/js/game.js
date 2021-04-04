@@ -6,9 +6,9 @@ import { GameState } from "./state.js";
 export class GameScene {
     constructor(param, ev) {
         this.camera = new Camera(0, 0, 160, 144);
-        this.stage = new Stage(ev);
         this.state = new GameState();
         this.objects = new ObjectManager(this.state);
+        this.stage = new Stage(this.objects.getItemGenerator(), ev);
         this.stage.parseObjects(this.objects);
         this.objects.setInitialCameraPosition(this.camera);
         this.stage.restrictCamera(this.camera);
