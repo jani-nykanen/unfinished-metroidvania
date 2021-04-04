@@ -16,7 +16,6 @@ export class Player extends CollisionObject {
         // Random getters, might need to organize them better later
         this.getSwordHitId = () => this.swordHitId;
         this.isDownAttack = () => this.downAttacking;
-        this.getHealthRatio = () => this.state.getHealth() / this.state.getMaxHealth();
         this.checkpoint = null;
         this.friction = new Vector2(0.1, 0.1);
         this.hitbox = new Vector2(8, 12);
@@ -685,5 +684,8 @@ export class Player extends CollisionObject {
     }
     addHealth(amount) {
         this.state.addHealth(amount);
+    }
+    addAmmo(amount) {
+        this.state.addAmmo(amount);
     }
 }

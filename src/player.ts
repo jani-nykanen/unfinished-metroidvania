@@ -1119,8 +1119,13 @@ export class Player extends CollisionObject {
     }
 
 
+    public addAmmo(amount : number) {
+
+        this.state.addAmmo(amount);
+    }
+
+
     // Random getters, might need to organize them better later
     public getSwordHitId = () : number => this.swordHitId;
     public isDownAttack = () : boolean => this.downAttacking;
-    public getHealthRatio = () : number => this.state.getHealth() / this.state.getMaxHealth();
 }

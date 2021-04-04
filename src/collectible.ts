@@ -89,6 +89,11 @@ export class Collectible extends CollisionObject {
                 count = 2;
                 player.addHealth(count);
             }
+            else if (this.id == 2) {
+
+                count = 5;
+                player.addAmmo(5);
+            }
 
             nextObject(flyingText, FlyingText)
                 .spawn(count, player.getPos().x, player.getPos().y - 4, 
