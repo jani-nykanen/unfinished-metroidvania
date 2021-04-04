@@ -1,5 +1,5 @@
-import { Collectible } from "./collectible.js";
 import { getEnemyType } from "./enemytypes.js";
+import { CollectibleItemGenerator } from "./itemgen.js";
 import { ObjectPool } from "./objectpool.js";
 import { Player } from "./player.js";
 import { Projectile } from "./projectile.js";
@@ -11,7 +11,7 @@ export class ObjectManager {
         this.enemies = new Array();
         this.interactionObjects = new Array();
         this.flyingMessages = new Array();
-        this.collectibles = new ObjectPool(Collectible);
+        this.collectibles = new CollectibleItemGenerator(state);
     }
     update(stage, camera, ev) {
         this.player.update(ev);

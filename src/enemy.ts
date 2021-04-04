@@ -8,6 +8,7 @@ import { Projectile } from "./projectile.js";
 import { FlyingText } from "./flyingtext.js";
 import { ObjectPool } from "./objectpool.js";
 import { Collectible } from "./collectible.js";
+import { CollectibleItemGenerator } from "./itemgen.js";
 
 
 export abstract class Enemy extends CollisionObject {
@@ -29,9 +30,6 @@ export abstract class Enemy extends CollisionObject {
     private hurtTimer : number;
     private lastHitId : number;
     private lastExplosionId : number;
-
-    // For spawning hearts
-    private playerHealthFactor : number;
 
     
     constructor(x : number, y : number, id = 0, health = 1, attackPower = 1) {
@@ -64,8 +62,6 @@ export abstract class Enemy extends CollisionObject {
     
         this.lastHitId = -1;
         this.lastExplosionId = -1;
-    
-        this.playerHealthFactor = 0;
     }
 
     
@@ -116,23 +112,16 @@ export abstract class Enemy extends CollisionObject {
     protected playerEvent(pl : Player, ev : GameEvent) {}
 
 
-    private spawnCollectibles(collectibles : ObjectPool<Collectible>, dir : number, probabilityFactor = 0.0) {
+    private spawnCollectibles(collectibles :CollectibleItemGenerator, dir : number) {
 
         const JUMP_Y = -1.0;
-        const BASE_HEALTH_PROBABILITY = 0.25;
 
-        let id = 0;
-        if (Math.random() <= probabilityFactor * BASE_HEALTH_PROBABILITY)
-            id = 1;
-
-        // Just spawn a coin for starters
-        collectibles.nextObject().spawn(
-            id, this.pos.x, this.pos.y, dir, JUMP_Y);
+        collectibles.spawn(this.pos.x, this.pos.y, dir, JUMP_Y);
     }
 
 
     private hurt(dmg : number, flyingText : Array<FlyingText>, 
-        collectibles : ObjectPool<Collectible>, 
+        collectibles : CollectibleItemGenerator, 
         knockbackDir : number, knockback : number, ev : GameEvent) {
 
         const BASE_KNOCKBACK = 1.0;
@@ -141,7 +130,7 @@ export abstract class Enemy extends CollisionObject {
 
         if ((this.health -= dmg) <= 0) {
 
-            this.spawnCollectibles(collectibles, knockbackDir, this.playerHealthFactor);
+            this.spawnCollectibles(collectibles, knockbackDir);
 
             this.hurtTimer = 0;
             this.kill(ev);
@@ -160,14 +149,12 @@ export abstract class Enemy extends CollisionObject {
 
     public playerCollision(pl : Player, 
         flyingText : Array<FlyingText>, 
-        collectibles : ObjectPool<Collectible>,
+        collectibles : CollectibleItemGenerator,
         ev : GameEvent) : boolean {
 
         const PLAYER_KNOCKBACK = 2.0;
 
         if (this.isDeactivated()) return false;
-
-        this.playerHealthFactor = 1.0 - pl.getHealthRatio();
 
         this.playerEvent(pl, ev);
 
@@ -205,7 +192,7 @@ export abstract class Enemy extends CollisionObject {
 
     public projectileCollision(p : Projectile, 
         flyingText : Array<FlyingText>, 
-        collectibles : ObjectPool<Collectible>,
+        collectibles : CollectibleItemGenerator,
         ev : GameEvent) : boolean {
 
         if (!p.isFriendly() || (p.isDying() && !p.isExplosive()) 

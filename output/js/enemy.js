@@ -25,7 +25,6 @@ export class Enemy extends CollisionObject {
         this.mass = 1;
         this.lastHitId = -1;
         this.lastExplosionId = -1;
-        this.playerHealthFactor = 0;
     }
     updateAI(ev) { }
     die(ev) {
@@ -50,21 +49,16 @@ export class Enemy extends CollisionObject {
         c.drawSprite(this.spr, bmp, px, py, this.flip);
     }
     playerEvent(pl, ev) { }
-    spawnCollectibles(collectibles, dir, probabilityFactor = 0.0) {
+    spawnCollectibles(collectibles, dir) {
         const JUMP_Y = -1.0;
-        const BASE_HEALTH_PROBABILITY = 0.25;
-        let id = 0;
-        if (Math.random() <= probabilityFactor * BASE_HEALTH_PROBABILITY)
-            id = 1;
-        // Just spawn a coin for starters
-        collectibles.nextObject().spawn(id, this.pos.x, this.pos.y, dir, JUMP_Y);
+        collectibles.spawn(this.pos.x, this.pos.y, dir, JUMP_Y);
     }
     hurt(dmg, flyingText, collectibles, knockbackDir, knockback, ev) {
         const BASE_KNOCKBACK = 1.0;
         const HURT_TIME = 30;
         const MESSAGE_SPEED = 1.0;
         if ((this.health -= dmg) <= 0) {
-            this.spawnCollectibles(collectibles, knockbackDir, this.playerHealthFactor);
+            this.spawnCollectibles(collectibles, knockbackDir);
             this.hurtTimer = 0;
             this.kill(ev);
         }
@@ -78,7 +72,6 @@ export class Enemy extends CollisionObject {
         const PLAYER_KNOCKBACK = 2.0;
         if (this.isDeactivated())
             return false;
-        this.playerHealthFactor = 1.0 - pl.getHealthRatio();
         this.playerEvent(pl, ev);
         // Cannot use Math.sign here since it might return 0
         // (very unlikely since we are dealing with floating point numbers,

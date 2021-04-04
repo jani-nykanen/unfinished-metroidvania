@@ -7,6 +7,7 @@ import { Enemy } from "./enemy.js";
 import { getEnemyType } from "./enemytypes.js";
 import { FlyingText } from "./flyingtext.js";
 import { InteractionTarget } from "./interactiontarget.js";
+import { CollectibleItemGenerator } from "./itemgen.js";
 import { ObjectPool } from "./objectpool.js";
 import { Player } from "./player.js";
 import { Projectile } from "./projectile.js";
@@ -19,7 +20,7 @@ export class ObjectManager {
 
     private player : Player;
     private projectiles : ObjectPool<Projectile>;
-    private collectibles : ObjectPool<Collectible>;
+    private collectibles : CollectibleItemGenerator;
     private enemies : Array<Enemy>;
     private interactionObjects : Array<InteractionTarget>;
     private flyingMessages : Array<FlyingText>;
@@ -32,7 +33,7 @@ export class ObjectManager {
         this.enemies = new Array<Enemy>();
         this.interactionObjects = new Array<InteractionTarget> ();
         this.flyingMessages = new Array<FlyingText> ();
-        this.collectibles = new ObjectPool<Collectible> (Collectible);
+        this.collectibles = new CollectibleItemGenerator(state);
     }
 
 
