@@ -112,25 +112,24 @@ export class Stage {
             o.wallCollision(x * 16, y * 16, 16, 1, ev);
         }
     }
-    spawnParticles(x, y) {
-        const PARTICLE_COUNT = 4;
-        const ANGLE_STEP = Math.PI * 2 / PARTICLE_COUNT;
+    spawnParticles(x, y, count = 4, id = 0) {
+        const ANGLE_STEP = Math.PI * 2 / count;
         const SPEED_MIN = 1.75;
         const SPEED_MAX = 2.25;
         const JUMP_Y = -1.0;
         const ANGLE_START = Math.PI / 4;
         const PARTICLE_TIME = 300;
         let angle, speed;
-        for (let i = 0; i < PARTICLE_COUNT; ++i) {
+        for (let i = 0; i < count; ++i) {
             angle = ANGLE_START + i * ANGLE_STEP;
             speed = SPEED_MIN + Math.random() * (SPEED_MAX - SPEED_MIN);
             this.particles.nextObject()
-                .spawn(x, y, new Vector2(Math.cos(angle) * speed, Math.sin(angle) * speed + JUMP_Y), Math.floor(Math.random() * 4), 0, PARTICLE_TIME);
+                .spawn(x, y, new Vector2(Math.cos(angle) * speed, Math.sin(angle) * speed + JUMP_Y), Math.floor(Math.random() * 4), id, PARTICLE_TIME);
         }
     }
     handleSpecialTileCollision(o, layer, x, y, colId, ev) {
         const LADDER_WIDTH = 8;
-        const BREAK_TOP_OFFSET = 2;
+        const PARTICLE_COUNT = [4, 6];
         let ladderOff = (16 - LADDER_WIDTH) / 2;
         switch (colId) {
             // Ladder top
@@ -138,11 +137,12 @@ export class Stage {
                 o.ladderCollision(x * 16 + ladderOff, y * 16 + 15, LADDER_WIDTH, 1, true, ev);
                 o.verticalCollision(x * 16, (y + 1) * 16, 16, 1, ev);
                 break;
-            // Breaking tile
+            // Breaking tiles
             case 16:
-                if (o.breakCollision(x * 16, y * 16 + BREAK_TOP_OFFSET, 16, 16, ev)) {
+            case 17:
+                if (o.breakCollision(x * 16, y * 16, 16, 16, colId == 16, ev)) {
                     this.layers[layer][y * this.width + x] = 0;
-                    this.spawnParticles(x * 16 + 8, y * 16 + 8);
+                    this.spawnParticles(x * 16 + 8, y * 16 + 8, PARTICLE_COUNT[colId - 16], colId - 16);
                 }
                 else {
                     this.handleBaseTileCollision(o, layer, x, y, 14, ev);

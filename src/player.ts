@@ -1054,10 +1054,13 @@ export class Player extends CollisionObject {
     }
 
 
-    public breakCollision(x : number, y : number, w : number, h : number, ev : GameEvent) : boolean {
+    public breakCollision(x : number, y : number, w : number, h : number, 
+        strong : boolean, ev : GameEvent) : boolean {
+
+        const TOP_OFFSET = 2;
 
         return this.canHurt && 
-            boxOverlayRect(this.swordHitbox, x, y, w, h);
+            boxOverlayRect(this.swordHitbox, x, y + TOP_OFFSET, w, h);
     }
 
 

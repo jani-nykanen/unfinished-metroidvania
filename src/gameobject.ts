@@ -363,7 +363,8 @@ export abstract class CollisionObject extends GameObject {
     }
 
 
-    public breakCollision(x : number, y : number, w : number, h : number, ev : GameEvent) : boolean {
+    public breakCollision(x : number, y : number, w : number, h : number, 
+        strong : boolean, ev : GameEvent) : boolean {
 
         return false;
     }

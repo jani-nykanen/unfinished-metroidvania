@@ -1,5 +1,6 @@
 import { Sprite } from "./core/sprite.js";
 import { Vector2 } from "./core/vector.js";
+import { boxOverlay } from "./gameobject.js";
 import { InteractionTargetWithCollisions } from "./interactiontarget.js";
 export class Projectile extends InteractionTargetWithCollisions {
     constructor() {
@@ -68,15 +69,27 @@ export class Projectile extends InteractionTargetWithCollisions {
         c.drawSprite(this.spr, bmp, px, py);
     }
     checkExplosion(x, y, w, h) {
-        const EXP_RADIUS = 10;
+        const EXP_RADIUS = 12;
         return this.explosive && this.dying &&
             (this.pos.x + EXP_RADIUS > x &&
                 this.pos.x - EXP_RADIUS < x + w &&
                 this.pos.y + EXP_RADIUS > y &&
                 this.pos.y - EXP_RADIUS < y + h);
     }
-    breakCollision(x, y, w, h, ev) {
-        return this.checkExplosion(x, y, w, h);
+    breakCollision(x, y, w, h, strong, ev) {
+        const BONUS_MARGIN = 1;
+        if (!this.exist || (!this.explosive && this.dying)
+            || !this.inCamera)
+            return false;
+        if (strong) {
+            return this.checkExplosion(x, y, w, h);
+        }
+        else {
+            if (boxOverlay(this.pos, this.center, this.collisionBox, x - BONUS_MARGIN, y - BONUS_MARGIN, w + BONUS_MARGIN * 2, h + BONUS_MARGIN * 2)) {
+                this.kill(ev);
+                return true;
+            }
+        }
     }
     kill(ev) {
         this.dying = true;

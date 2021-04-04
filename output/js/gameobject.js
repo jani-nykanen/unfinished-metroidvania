@@ -190,7 +190,7 @@ export class CollisionObject extends GameObject {
     hurtCollision(x, y, w, h, dmg, knockback, ev) {
         return false;
     }
-    breakCollision(x, y, w, h, ev) {
+    breakCollision(x, y, w, h, strong, ev) {
         return false;
     }
     ladderCollision(x, y, w, h, ladderTop, ev) {

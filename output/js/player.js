@@ -650,9 +650,10 @@ export class Player extends CollisionObject {
     getSwordHitbox() {
         return this.swordHitbox.clone();
     }
-    breakCollision(x, y, w, h, ev) {
+    breakCollision(x, y, w, h, strong, ev) {
+        const TOP_OFFSET = 2;
         return this.canHurt &&
-            boxOverlayRect(this.swordHitbox, x, y, w, h);
+            boxOverlayRect(this.swordHitbox, x, y + TOP_OFFSET, w, h);
     }
     hurtCollision(x, y, w, h, dmg, knockback, ev) {
         const KNOCKBACK_TIME = 30;

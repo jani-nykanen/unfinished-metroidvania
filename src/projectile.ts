@@ -2,6 +2,7 @@ import { Canvas } from "./core/canvas.js";
 import { GameEvent } from "./core/core.js";
 import { Sprite } from "./core/sprite.js";
 import { Vector2 } from "./core/vector.js";
+import { boxOverlay } from "./gameobject.js";
 import { InteractionTargetWithCollisions } from "./interactiontarget.js";
 
 
@@ -126,7 +127,7 @@ export class Projectile extends InteractionTargetWithCollisions {
 
     public checkExplosion(x : number, y : number, w : number, h : number) : boolean {
 
-        const EXP_RADIUS = 10;
+        const EXP_RADIUS = 12;
 
         return this.explosive && this.dying &&
             (this.pos.x + EXP_RADIUS > x &&
@@ -136,9 +137,27 @@ export class Projectile extends InteractionTargetWithCollisions {
     }
 
 
-    public breakCollision(x : number, y : number, w : number, h : number, ev : GameEvent) : boolean {
+    public breakCollision(x : number, y : number, w : number, h : number, strong : boolean, ev : GameEvent) : boolean {
 
-        return this.checkExplosion(x, y, w, h);
+        const BONUS_MARGIN = 1;
+
+        if (!this.exist || (!this.explosive && this.dying) 
+            || !this.inCamera) return false;
+
+        if (strong) {
+
+            return this.checkExplosion(x, y, w, h);
+        }
+        else {
+
+            if (boxOverlay(this.pos, this.center, this.collisionBox, 
+                x-BONUS_MARGIN, y-BONUS_MARGIN, 
+                w + BONUS_MARGIN*2, h + BONUS_MARGIN*2)) {
+
+                this.kill(ev);
+                return true;
+            }
+        }
     }
 
 

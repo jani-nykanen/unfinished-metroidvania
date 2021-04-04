@@ -192,10 +192,9 @@ export class Stage {
     }
 
 
-    private spawnParticles(x : number, y : number) {
+    private spawnParticles(x : number, y : number, count = 4, id = 0) {
 
-        const PARTICLE_COUNT = 4;
-        const ANGLE_STEP = Math.PI * 2 / PARTICLE_COUNT;
+        const ANGLE_STEP = Math.PI * 2 / count;
         const SPEED_MIN = 1.75;
         const SPEED_MAX = 2.25;
         const JUMP_Y = -1.0;
@@ -203,7 +202,7 @@ export class Stage {
         const PARTICLE_TIME = 300;
 
         let angle, speed : number;
-        for (let i = 0; i < PARTICLE_COUNT; ++ i) {
+        for (let i = 0; i < count; ++ i) {
 
             angle = ANGLE_START + i * ANGLE_STEP;
             speed = SPEED_MIN + Math.random() * (SPEED_MAX - SPEED_MIN);
@@ -213,7 +212,7 @@ export class Stage {
                     Math.cos(angle) * speed,
                     Math.sin(angle) * speed + JUMP_Y
                 ), Math.floor(Math.random()*4), 
-                0, PARTICLE_TIME);
+                id, PARTICLE_TIME);
         }
     }
 
@@ -223,7 +222,7 @@ export class Stage {
         colId : number, ev : GameEvent) {
 
         const LADDER_WIDTH = 8;
-        const BREAK_TOP_OFFSET = 2;
+        const PARTICLE_COUNT = [4, 6];
 
         let ladderOff = (16 - LADDER_WIDTH) / 2;
 
@@ -238,19 +237,19 @@ export class Stage {
 
             break;
             
-        // Breaking tile
+        // Breaking tiles
         case 16:
+        case 17:
                 
-            if (o.breakCollision(x*16, y*16 + BREAK_TOP_OFFSET, 16, 16, ev)) {
+            if (o.breakCollision(x*16, y*16, 16, 16, colId == 16, ev)) {
 
                 this.layers[layer][y*this.width + x] = 0;
-                this.spawnParticles(x*16 + 8, y*16 + 8);
+                this.spawnParticles(x*16 + 8, y*16 + 8, PARTICLE_COUNT[colId-16], colId - 16);
             }
             else {
 
                 this.handleBaseTileCollision(o, layer, x, y, 14, ev);
             }
-
             break;
 
         // Ladder bottom
