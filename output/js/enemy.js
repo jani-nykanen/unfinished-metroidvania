@@ -27,6 +27,7 @@ export class Enemy extends CollisionObject {
         this.mass = 1;
         this.lastHitId = -1;
         this.lastExplosionId = -1;
+        this.offCameraRadius = 32;
     }
     updateAI(ev) { }
     die(ev) {

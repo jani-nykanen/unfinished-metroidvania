@@ -65,6 +65,8 @@ export abstract class Enemy extends CollisionObject {
     
         this.lastHitId = -1;
         this.lastExplosionId = -1;
+
+        this.offCameraRadius = 32;
     }
 
     

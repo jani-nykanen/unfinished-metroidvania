@@ -4,14 +4,14 @@ import { Vector2 } from "./core/vector.js";
 import { Enemy } from "./enemy.js";
 // If I make it a pure array, it will complain that "Slime" used
 // before declared
-const ENEMY_TYPES = () => [Slime, Bat, Spider, Fly];
+const ENEMY_TYPES = () => [Slime, Bat, Spider, Fly, GuineaPig];
 export const getEnemyType = (index) => ENEMY_TYPES()[clamp(index, 0, ENEMY_TYPES().length - 1) | 0];
 export class Slime extends Enemy {
     constructor(x, y) {
         super(x, y, 0, 3, 2);
         const BASE_GRAVITY = 2.0;
         this.collisionBox = new Vector2(8, 8);
-        this.hitbox = new Vector2(8, 8);
+        this.hitbox = new Vector2(10, 10);
         this.friction.x = 0.05;
         this.center.y = 3;
         this.mass = 0.75;
@@ -49,7 +49,7 @@ export class Bat extends Enemy {
     constructor(x, y) {
         super(x, y, 1, 3, 2);
         this.collisionBox = new Vector2(8, 8);
-        this.hitbox = new Vector2(8, 8);
+        this.hitbox = new Vector2(12, 8);
         this.mass = 0.75;
         // For "sleeping" effect
         this.pos.y -= 4;
@@ -132,7 +132,7 @@ export class Fly extends Enemy {
         0;
         super(x, y, 3, 2, 2);
         this.collisionBox = new Vector2(8, 8);
-        this.hitbox = new Vector2(8, 8);
+        this.hitbox = new Vector2(10, 10);
         this.mass = 0.25;
         this.moveDir = new Vector2(0, 0);
         this.friction = new Vector2(0.010, 0.010);
@@ -140,16 +140,25 @@ export class Fly extends Enemy {
             (Math.floor((x / 16) | 0) % 2) * Fly.WAIT_TIME / 2;
         this.rushing = false;
         this.bounceFactor = 1.0;
+        this.waveTimer = 0.0;
     }
     updateAI(ev) {
         const ANIM_SPEED = 3.0;
-        const MOVE_SPEED = 1.5;
+        const MOVE_SPEED = 1.0;
+        const WAVE_SPEED = 0.05;
+        const AMPLITUDE = 0.5;
         this.spr.animate(this.spr.getRow(), 0, 3, ANIM_SPEED, ev.step);
         this.target.zeros();
+        if (!this.rushing) {
+            this.waveTimer += WAVE_SPEED * ev.step;
+            this.waveTimer %= Math.PI * 2;
+            this.target.y = Math.sin(this.waveTimer) * AMPLITUDE;
+        }
         if ((this.waitTimer -= ev.step) <= 0) {
             if (!this.rushing) {
                 this.speed = Vector2.scalarMultiply(this.moveDir, MOVE_SPEED);
                 this.waitTimer += Fly.RUSH_TIME;
+                // this.waveTimer = 0.0;
             }
             else {
                 this.waitTimer += Fly.WAIT_TIME;
@@ -162,3 +171,29 @@ export class Fly extends Enemy {
 }
 Fly.WAIT_TIME = 60;
 Fly.RUSH_TIME = 120;
+export class GuineaPig extends Enemy {
+    constructor(x, y) {
+        super(x, y, 4, 4, 2);
+        const BASE_GRAVITY = 2.0;
+        this.collisionBox = new Vector2(6, 8);
+        this.hitbox = new Vector2(12, 10);
+        this.friction.x = 0.015;
+        this.center.y = 3;
+        this.mass = 0.35;
+        this.target.y = BASE_GRAVITY;
+        this.dir = 0;
+    }
+    updateAI(ev) {
+        const ANIM_SPEED = 5;
+        const MOVE_SPEED = 0.5;
+        if (this.canJump)
+            this.spr.animate(this.spr.getRow(), 0, 3, ANIM_SPEED, ev.step);
+        else
+            this.spr.setFrame(4, this.spr.getRow());
+        this.target.x = MOVE_SPEED * this.dir;
+        this.flip = this.dir < 0 ? Flip.None : Flip.Horizontal;
+    }
+    playerEvent(pl, ev) {
+        this.dir = Math.sign(pl.getPos().x - this.pos.x);
+    }
+}

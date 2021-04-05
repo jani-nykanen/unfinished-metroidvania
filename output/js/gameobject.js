@@ -51,6 +51,7 @@ export class WeakGameObject extends ExistingObject {
         this.spr = new Sprite(0, 0);
         this.dying = false;
         this.inCamera = false;
+        this.offCameraRadius = 0;
         this.exist = true;
     }
     die(ev) {
@@ -72,7 +73,7 @@ export class WeakGameObject extends ExistingObject {
     }
     cameraCheck(cam) {
         let pos = cam.getTopLeftCorner();
-        let checkbox = new Vector2(this.spr.width, this.spr.height);
+        let checkbox = new Vector2(this.spr.width + this.offCameraRadius * 2, this.spr.height + this.offCameraRadius * 2);
         let oldState = this.inCamera;
         this.inCamera = boxOverlay(this.pos, this.center, checkbox, pos.x, pos.y, cam.width, cam.height);
         if (oldState && !this.inCamera) {

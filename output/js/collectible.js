@@ -13,6 +13,7 @@ export class Collectible extends CollisionObject {
         this.spr = new Sprite(16, 16);
         this.bounceFactor = 0.90;
         this.friction = new Vector2(0.025, 0.05);
+        this.offCameraRadius = 16;
     }
     outsideCameraEvent() {
         this.exist = false;

@@ -8,7 +8,7 @@ import { Player } from "./player.js";
 
 // If I make it a pure array, it will complain that "Slime" used
 // before declared
-const ENEMY_TYPES = () : Array<Function> => [Slime, Bat, Spider, Fly];
+const ENEMY_TYPES = () : Array<Function> => [Slime, Bat, Spider, Fly, GuineaPig];
 
 export const getEnemyType = (index : number) : Function => ENEMY_TYPES()[clamp(index, 0, ENEMY_TYPES().length-1) | 0];
 
@@ -28,7 +28,7 @@ export class Slime extends Enemy {
         const BASE_GRAVITY = 2.0;
 
         this.collisionBox = new Vector2(8, 8);
-        this.hitbox = new Vector2(8, 8);
+        this.hitbox = new Vector2(10, 10);
         this.friction.x = 0.05;
 
         this.center.y = 3;
@@ -94,7 +94,7 @@ export class Bat extends Enemy {
         super(x, y, 1, 3, 2);
 
         this.collisionBox = new Vector2(8, 8);
-        this.hitbox = new Vector2(8, 8);
+        this.hitbox = new Vector2(12, 8);
 
         this.mass = 0.75;
 
@@ -234,6 +234,7 @@ export class Fly extends Enemy {
     private moveDir : Vector2;
     private waitTimer : number;
     private rushing : boolean;
+    private waveTimer : number;
 
 
     constructor(x : number, y : number) {
@@ -241,7 +242,7 @@ export class Fly extends Enemy {
         super(x, y, 3, 2, 2);
 
         this.collisionBox = new Vector2(8, 8);
-        this.hitbox = new Vector2(8, 8);
+        this.hitbox = new Vector2(10, 10);
 
         this.mass = 0.25;
     
@@ -253,17 +254,29 @@ export class Fly extends Enemy {
         this.rushing = false;
 
         this.bounceFactor = 1.0;
+
+        this.waveTimer = 0.0;
     }
 
 
     protected updateAI(ev : GameEvent) {
 
         const ANIM_SPEED = 3.0;
-        const MOVE_SPEED = 1.5;
+        const MOVE_SPEED = 1.0;
+        const WAVE_SPEED = 0.05;
+        const AMPLITUDE = 0.5;
 
         this.spr.animate(this.spr.getRow(), 0, 3, ANIM_SPEED, ev.step);
         
         this.target.zeros();
+        if (!this.rushing) {
+
+            this.waveTimer += WAVE_SPEED * ev.step;
+            this.waveTimer %= Math.PI * 2;
+
+            this.target.y = Math.sin(this.waveTimer) * AMPLITUDE;
+        }
+        
 
         if ((this.waitTimer -= ev.step) <= 0) {
 
@@ -271,6 +284,8 @@ export class Fly extends Enemy {
 
                 this.speed = Vector2.scalarMultiply(this.moveDir, MOVE_SPEED);
                 this.waitTimer += Fly.RUSH_TIME;
+
+                // this.waveTimer = 0.0;
             }
             else {
 
@@ -283,5 +298,50 @@ export class Fly extends Enemy {
     protected playerEvent(pl : Player, ev : GameEvent) {
 
         this.moveDir = Vector2.direction(this.pos, pl.getPos());
+    }
+}
+
+
+export class GuineaPig extends Enemy {
+
+
+    constructor(x : number, y : number) {
+
+        super(x, y, 4, 4, 2);
+
+        const BASE_GRAVITY = 2.0;
+
+        this.collisionBox = new Vector2(6, 8);
+        this.hitbox = new Vector2(12, 10);
+        this.friction.x = 0.015;
+        this.center.y = 3;
+
+        this.mass = 0.35;
+
+        this.target.y = BASE_GRAVITY;
+    
+        this.dir = 0;
+    }
+
+
+    protected updateAI(ev : GameEvent) {
+
+        const ANIM_SPEED = 5;
+        const MOVE_SPEED = 0.5;
+
+        if (this.canJump)
+            this.spr.animate(this.spr.getRow(), 0, 3, ANIM_SPEED, ev.step);
+        else
+            this.spr.setFrame(4, this.spr.getRow());
+
+        this.target.x = MOVE_SPEED * this.dir;
+
+        this.flip = this.dir < 0 ? Flip.None : Flip.Horizontal;
+    }
+
+
+    protected playerEvent(pl : Player, ev : GameEvent) {
+
+        this.dir = Math.sign(pl.getPos().x - this.pos.x);
     }
 }
