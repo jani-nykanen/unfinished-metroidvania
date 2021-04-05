@@ -4,7 +4,7 @@ import { Vector2 } from "./core/vector.js";
 import { Enemy } from "./enemy.js";
 // If I make it a pure array, it will complain that "Slime" used
 // before declared
-const ENEMY_TYPES = () => [Slime, Bat, Spider];
+const ENEMY_TYPES = () => [Slime, Bat, Spider, Fly];
 export const getEnemyType = (index) => ENEMY_TYPES()[clamp(index, 0, ENEMY_TYPES().length - 1) | 0];
 export class Slime extends Enemy {
     constructor(x, y) {
@@ -127,3 +127,38 @@ export class Spider extends Enemy {
         this.speed.x *= -1;
     }
 }
+export class Fly extends Enemy {
+    constructor(x, y) {
+        0;
+        super(x, y, 3, 2, 2);
+        this.collisionBox = new Vector2(8, 8);
+        this.hitbox = new Vector2(8, 8);
+        this.mass = 0.25;
+        this.moveDir = new Vector2(0, 0);
+        this.friction = new Vector2(0.010, 0.010);
+        this.waitTimer = Fly.WAIT_TIME +
+            (Math.floor((x / 16) | 0) % 2) * Fly.WAIT_TIME / 2;
+        this.rushing = false;
+        this.bounceFactor = 1.0;
+    }
+    updateAI(ev) {
+        const ANIM_SPEED = 3.0;
+        const MOVE_SPEED = 1.5;
+        this.spr.animate(this.spr.getRow(), 0, 3, ANIM_SPEED, ev.step);
+        this.target.zeros();
+        if ((this.waitTimer -= ev.step) <= 0) {
+            if (!this.rushing) {
+                this.speed = Vector2.scalarMultiply(this.moveDir, MOVE_SPEED);
+                this.waitTimer += Fly.RUSH_TIME;
+            }
+            else {
+                this.waitTimer += Fly.WAIT_TIME;
+            }
+        }
+    }
+    playerEvent(pl, ev) {
+        this.moveDir = Vector2.direction(this.pos, pl.getPos());
+    }
+}
+Fly.WAIT_TIME = 60;
+Fly.RUSH_TIME = 120;

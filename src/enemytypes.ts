@@ -8,7 +8,7 @@ import { Player } from "./player.js";
 
 // If I make it a pure array, it will complain that "Slime" used
 // before declared
-const ENEMY_TYPES = () : Array<Function> => [Slime, Bat, Spider];
+const ENEMY_TYPES = () : Array<Function> => [Slime, Bat, Spider, Fly];
 
 export const getEnemyType = (index : number) : Function => ENEMY_TYPES()[clamp(index, 0, ENEMY_TYPES().length-1) | 0];
 
@@ -220,5 +220,68 @@ export class Spider extends Enemy {
 
         this.dir = -dir;
         this.speed.x *= -1;
+    }
+}
+
+
+export class Fly extends Enemy {
+
+
+    static WAIT_TIME = 60;
+    static RUSH_TIME = 120;
+
+
+    private moveDir : Vector2;
+    private waitTimer : number;
+    private rushing : boolean;
+
+
+    constructor(x : number, y : number) {
+0
+        super(x, y, 3, 2, 2);
+
+        this.collisionBox = new Vector2(8, 8);
+        this.hitbox = new Vector2(8, 8);
+
+        this.mass = 0.25;
+    
+        this.moveDir = new Vector2(0, 0);
+        this.friction = new Vector2(0.010, 0.010);
+
+        this.waitTimer = Fly.WAIT_TIME + 
+            (Math.floor((x/16) | 0) % 2) * Fly.WAIT_TIME/2;
+        this.rushing = false;
+
+        this.bounceFactor = 1.0;
+    }
+
+
+    protected updateAI(ev : GameEvent) {
+
+        const ANIM_SPEED = 3.0;
+        const MOVE_SPEED = 1.5;
+
+        this.spr.animate(this.spr.getRow(), 0, 3, ANIM_SPEED, ev.step);
+        
+        this.target.zeros();
+
+        if ((this.waitTimer -= ev.step) <= 0) {
+
+            if (!this.rushing) {
+
+                this.speed = Vector2.scalarMultiply(this.moveDir, MOVE_SPEED);
+                this.waitTimer += Fly.RUSH_TIME;
+            }
+            else {
+
+                this.waitTimer += Fly.WAIT_TIME;
+            }
+        }
+    }
+
+
+    protected playerEvent(pl : Player, ev : GameEvent) {
+
+        this.moveDir = Vector2.direction(this.pos, pl.getPos());
     }
 }
