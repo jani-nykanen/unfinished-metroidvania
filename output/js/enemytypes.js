@@ -4,7 +4,7 @@ import { Vector2 } from "./core/vector.js";
 import { Enemy } from "./enemy.js";
 // If I make it a pure array, it will complain that "Slime" used
 // before declared
-const ENEMY_TYPES = () => [Slime, Bat];
+const ENEMY_TYPES = () => [Slime, Bat, Spider];
 export const getEnemyType = (index) => ENEMY_TYPES()[clamp(index, 0, ENEMY_TYPES().length - 1) | 0];
 export class Slime extends Enemy {
     constructor(x, y) {
@@ -50,6 +50,7 @@ export class Bat extends Enemy {
         super(x, y, 1, 3, 2);
         this.collisionBox = new Vector2(8, 8);
         this.hitbox = new Vector2(8, 8);
+        this.mass = 0.75;
         // For "sleeping" effect
         this.pos.y -= 4;
         this.fallTimer = 0;
@@ -59,7 +60,7 @@ export class Bat extends Enemy {
     }
     updateAI(ev) {
         const ANIM_SPEED = 6.0;
-        const MOVE_SPEED = 0.5;
+        const MOVE_SPEED = 0.33;
         if (!this.awake)
             return;
         if (this.fallTimer > 0) {
@@ -90,5 +91,39 @@ export class Bat extends Enemy {
             this.speed.y = FALL_SPEED;
             this.target.y = this.speed.y;
         }
+    }
+}
+export class Spider extends Enemy {
+    constructor(x, y) {
+        super(x, y, 2, 3, 2);
+        const BASE_GRAVITY = 2.0;
+        this.collisionBox = new Vector2(6, 8);
+        this.hitbox = new Vector2(12, 8);
+        this.friction.x = 0.05;
+        this.center.y = 3;
+        this.mass = 0.75;
+        this.target.y = BASE_GRAVITY;
+        this.dir = ((x / 16) | 0) % 2 == 0 ? 1 : -1;
+        this.initialSpeedSet = false;
+    }
+    updateAI(ev) {
+        const ANIM_SPEED = 6;
+        const MOVE_SPEED = 0.25;
+        this.spr.animate(this.spr.getRow(), 0, 3, ANIM_SPEED, ev.step);
+        if (!this.isHurt() && !this.canJump && this.oldCanJump) {
+            this.dir *= -1;
+            this.speed.x *= -1;
+        }
+        this.target.x = MOVE_SPEED * this.dir;
+        if (!this.initialSpeedSet) {
+            this.speed.x = this.target.x;
+            this.initialSpeedSet = true;
+        }
+        this.flip = this.dir < 0 ? Flip.None : Flip.Horizontal;
+        this.oldCanJump = this.canJump;
+    }
+    wallCollisionEvent(dir, ev) {
+        this.dir = -dir;
+        this.speed.x *= -1;
     }
 }

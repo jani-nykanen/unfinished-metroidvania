@@ -31,6 +31,8 @@ export abstract class Enemy extends CollisionObject {
     private lastHitId : number;
     private lastExplosionId : number;
 
+    protected oldCanJump : boolean;
+
     
     constructor(x : number, y : number, id = 0, health = 1, attackPower = 1) {
 
@@ -56,6 +58,7 @@ export abstract class Enemy extends CollisionObject {
         this.renderOffset = new Vector2();
 
         this.canJump = false;
+        this.oldCanJump = false;
     
         this.hurtTimer = 0;
         this.mass = 1;
@@ -88,6 +91,7 @@ export abstract class Enemy extends CollisionObject {
 
         this.updateAI(ev);
 
+        this.oldCanJump = this.canJump;
         this.canJump = false;
     }
 
@@ -273,5 +277,8 @@ export abstract class Enemy extends CollisionObject {
         this.spr.setFrame(0, 0,);
         this.hurtTimer = 0;
     }
+
+
+    public isHurt = () : boolean => this.hurtTimer > 0;
 
 }

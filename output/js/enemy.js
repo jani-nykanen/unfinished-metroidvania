@@ -6,6 +6,7 @@ export class Enemy extends CollisionObject {
     constructor(x, y, id = 0, health = 1, attackPower = 1) {
         super(x, y);
         this.isDeactivated = () => (this.dying || !this.exist || !this.inCamera);
+        this.isHurt = () => this.hurtTimer > 0;
         this.maxHealth = health;
         this.health = this.maxHealth;
         this.attackPower = attackPower;
@@ -21,6 +22,7 @@ export class Enemy extends CollisionObject {
         this.collisionBox = this.hitbox.clone();
         this.renderOffset = new Vector2();
         this.canJump = false;
+        this.oldCanJump = false;
         this.hurtTimer = 0;
         this.mass = 1;
         this.lastHitId = -1;
@@ -36,6 +38,7 @@ export class Enemy extends CollisionObject {
         if (this.hurtTimer > 0)
             this.hurtTimer -= ev.step;
         this.updateAI(ev);
+        this.oldCanJump = this.canJump;
         this.canJump = false;
     }
     draw(c) {
